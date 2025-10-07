@@ -9,6 +9,7 @@ const mockFounders = [
   {
     id: 1,
     name: "Sarah Chen",
+    email: "sarah@builderswipe.com",
     building: "SaaS analytics dashboard for small businesses",
     brings: ["React", "Product Design", "Growth"],
     needs: ["Backend", "DevOps"],
@@ -20,6 +21,7 @@ const mockFounders = [
   {
     id: 2,
     name: "Marcus Thompson",
+    email: "marcus@fitremote.app",
     building: "Fitness app for remote workers",
     brings: ["iOS", "Backend", "ML"],
     needs: ["Marketing", "UX Design"],
@@ -31,6 +33,7 @@ const mockFounders = [
   {
     id: 3,
     name: "Priya Sharma",
+    email: "priya@devtools.io",
     building: "Open-source dev tools for API testing",
     brings: ["Node.js", "Documentation", "Community"],
     needs: ["Frontend", "Co-founder"],
@@ -73,7 +76,7 @@ const Swipe = () => {
       <main className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold text-foreground mb-3">
-            No more builders.
+            No more serious builders today
           </h2>
           <p className="text-muted-foreground mb-6">Come back tomorrow!</p>
           <Button onClick={() => navigate("/")}>Back to Home</Button>
@@ -94,70 +97,82 @@ const Swipe = () => {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Discover Builders</h1>
+          <p className="text-sm text-muted-foreground">Serious builders only.</p>
+        </div>
+
         <div
-          className={`bg-card rounded-2xl shadow-lg p-6 transition-all duration-300 ${
+          className={`bg-card rounded-2xl shadow-lg overflow-hidden border border-border transition-all duration-300 ${
             direction === 'left' ? '-translate-x-full opacity-0' : ''
           } ${direction === 'right' ? 'translate-x-full opacity-0' : ''}`}
         >
-          <div className="flex flex-col items-center mb-6">
-            <img
-              src={currentFounder.avatar}
-              alt={currentFounder.name}
-              className="w-20 h-20 rounded-full mb-4"
-            />
-            <h2 className="text-2xl font-bold text-foreground text-center">
-              {currentFounder.name}
-            </h2>
-          </div>
-
-          <div className="space-y-4 mb-8">
-            <p className="text-foreground/80 italic text-center">
-              Building: {currentFounder.building}
-            </p>
-
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="text-sm text-muted-foreground">Brings:</span>
-                {currentFounder.brings.map((skill) => (
-                  <Badge key={skill} className="bg-primary/10 text-primary hover:bg-primary/20">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="flex flex-wrap gap-2 justify-center">
-                <span className="text-sm text-muted-foreground">Needs:</span>
-                {currentFounder.needs.map((need) => (
-                  <Badge key={need} variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
-                    {need}
-                  </Badge>
-                ))}
+          <div className="p-6">
+            <div className="flex items-start gap-4 mb-6">
+              <img
+                src={currentFounder.avatar}
+                alt={currentFounder.name}
+                className="w-16 h-16 rounded-full border-2 border-primary flex-shrink-0"
+              />
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-foreground mb-1">
+                  {currentFounder.name}
+                </h2>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  🕗 {currentFounder.timezone} • {currentFounder.time}
+                </p>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              Available: {currentFounder.time} • {currentFounder.timezone}
-            </p>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Building</h3>
+                <p className="text-base text-foreground">{currentFounder.building}</p>
+              </div>
 
-            <div className="text-center">
-              <a
-                href={currentFounder.proof}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary underline hover:text-primary/80"
-              >
-                Proof: {shortenUrl(currentFounder.proof)}
-              </a>
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">I Bring</h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentFounder.brings.map((skill) => (
+                    <Badge key={skill} className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">I Need</h3>
+                <div className="flex flex-wrap gap-2">
+                  {currentFounder.needs.map((need) => (
+                    <Badge key={need} variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                      {need}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Proof</h3>
+                <a
+                  href={currentFounder.proof}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline break-all inline-block"
+                >
+                  {shortenUrl(currentFounder.proof)}
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-0 mt-6">
+        <div className="flex gap-4 mt-6">
           <Button
             onClick={() => handleSwipe(false)}
-            variant="secondary"
+            variant="outline"
             size="lg"
-            className="flex-1 rounded-r-none h-14 text-base"
+            className="flex-1 h-14 text-base"
           >
             <X className="mr-2 h-5 w-5" />
             Pass
@@ -165,7 +180,7 @@ const Swipe = () => {
           <Button
             onClick={() => handleSwipe(true)}
             size="lg"
-            className="flex-1 rounded-l-none h-14 text-base"
+            className="flex-1 h-14 text-base"
           >
             <Check className="mr-2 h-5 w-5" />
             Connect

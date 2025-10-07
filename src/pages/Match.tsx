@@ -37,48 +37,63 @@ const Match = () => {
         </div>
       )}
 
-      <div className="text-center max-w-md mx-auto z-10">
-        <h1 className="text-4xl font-bold text-success mb-3">
+      <div className="text-center max-w-md mx-auto space-y-6 relative z-10">
+        <h1 className="text-4xl font-bold text-foreground mb-4">
           It's a match! 🎉
         </h1>
         
-        <p className="text-lg text-foreground mb-8">
-          You and {founder.name} can now build together.
+        <p className="text-xl text-muted-foreground mb-8">
+          You both want to build together
         </p>
 
-        <div className="flex justify-center gap-4 mb-8">
-          <div className="relative">
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=You`}
-              alt="Your avatar"
-              className="w-16 h-16 rounded-full ring-4 ring-success shadow-lg"
-            />
+        <div className="flex justify-center items-center gap-8 mb-8">
+          <div className="text-center">
+            <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-2">
+              <span className="text-2xl">👤</span>
+            </div>
+            <p className="text-sm font-medium">You</p>
           </div>
-          <div className="relative">
-            <img
+          
+          <div className="text-4xl animate-pulse">
+            ❤️
+          </div>
+          
+          <div className="text-center">
+            <img 
               src={founder.avatar}
-              alt={`${founder.name}'s avatar`}
-              className="w-16 h-16 rounded-full ring-4 ring-success shadow-lg"
+              alt={founder.name}
+              className="w-24 h-24 rounded-full border-2 border-primary mb-2"
             />
+            <p className="text-sm font-medium">{founder.name}</p>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-6 mb-8 shadow-md">
-          <p className="text-foreground/80 mb-2">
-            ✅ Emails shared! Check your inbox to connect.
+        <div className="bg-card p-6 rounded-lg border border-border space-y-4">
+          <p className="text-lg font-semibold text-foreground">
+            You matched with {founder.name}!
           </p>
           <p className="text-sm text-muted-foreground">
-            Suggested next step: Share your Calendly!
+            Their email: <span className="text-foreground font-medium">{founder.email || "email@example.com"}</span>
           </p>
+          <div className="bg-muted/50 p-4 rounded-md text-left">
+            <p className="text-sm text-muted-foreground mb-2">👉 Send a quick intro:</p>
+            <p className="text-sm italic text-foreground">
+              "Hey {founder.name.split(' ')[0]}, saw we both love shipping — want to hop on a call?"
+            </p>
+          </div>
         </div>
 
-        <Button
+        <Button 
           onClick={() => navigate("/swipe")}
           size="lg"
-          className="w-full max-w-xs bg-foreground text-background hover:bg-foreground/90"
+          className="w-full"
         >
           Keep Swiping
         </Button>
+
+        <footer className="pt-8 text-xs text-muted-foreground/60">
+          Built with FounderSwipe — Serious builders only.
+        </footer>
       </div>
     </main>
   );

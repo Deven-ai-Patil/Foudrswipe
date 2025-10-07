@@ -84,7 +84,7 @@ const Create = () => {
       <div className="max-w-md mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground mb-1">Create Your Founder Card</h1>
-          <p className="text-sm text-muted-foreground">All fields required except avatar</p>
+          <p className="text-sm text-muted-foreground">Serious builders only. All fields required.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -218,9 +218,11 @@ const Create = () => {
               required
               className="border-2"
             />
-            <p className="text-xs text-muted-foreground">
-              GitHub, Lovable app, Figma, Notion, live demo — must be real.
-            </p>
+            <div className="text-xs space-y-1">
+              <p className="text-muted-foreground font-medium">You must link a real project to join.</p>
+              <p className="text-muted-foreground">✅ Good: yourapp.lovable.app, github.com/you/project, figma.com/proto/...</p>
+              <p className="text-muted-foreground">❌ Not enough: "I have an idea", "Coming soon"</p>
+            </div>
           </div>
 
           <Button type="submit" size="lg" className="w-full">
