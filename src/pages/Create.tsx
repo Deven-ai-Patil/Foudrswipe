@@ -64,7 +64,7 @@ const Create = () => {
     }
 
     // Store form data in localStorage for demo
-    localStorage.setItem('founderProfile', JSON.stringify({
+    localStorage.setItem('foundrProfile', JSON.stringify({
       ...formData,
       brings,
       needs,
@@ -73,7 +73,7 @@ const Create = () => {
 
     toast({
       title: "Profile created!",
-      description: "Ready to find your co-founder.",
+      description: "Ready to find your co-foundr.",
     });
 
     navigate("/swipe");
@@ -83,7 +83,7 @@ const Create = () => {
     <main className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-md mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">Create Your Founder Card</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-1">Create Your Foundr Card</h1>
           <p className="text-sm text-muted-foreground">Serious builders only. All fields required.</p>
         </div>
 
@@ -157,7 +157,7 @@ const Create = () => {
             <Label htmlFor="needs">I need</Label>
             <Input
               id="needs"
-              placeholder="What's missing? (e.g., Backend, Co-founder)"
+              placeholder="What's missing? (e.g., Backend, Co-foundr)"
               value={needsInput}
               onChange={(e) => setNeedsInput(e.target.value)}
               onKeyDown={(e) => {

@@ -92,7 +92,7 @@ const Match = () => {
         </Button>
 
         <footer className="pt-8 text-xs text-muted-foreground/60">
-          Built with FounderSwipe — Serious builders only.
+          Built with FoundrSwipe — Serious builders only.
         </footer>
       </div>
     </main>

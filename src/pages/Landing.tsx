@@ -8,7 +8,7 @@ const Landing = () => {
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="text-center max-w-md mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3">
-          FounderSwipe
+          FoundrSwipe
         </h1>
         
         <p className="text-xl text-muted-foreground mb-2">
@@ -16,7 +16,7 @@ const Landing = () => {
         </p>
         
         <p className="text-base text-muted-foreground mb-8">
-          Link your live project. Find your co-founder.
+          Link your live project. Find your co-foundr.
         </p>
 
         <Button
@@ -24,7 +24,7 @@ const Landing = () => {
           size="lg"
           className="w-full max-w-xs mx-auto text-base font-medium"
         >
-          Create Your Founder Card
+          Create Your Foundr Card
         </Button>
 
         <p className="text-xs text-muted-foreground/60 mt-12">
