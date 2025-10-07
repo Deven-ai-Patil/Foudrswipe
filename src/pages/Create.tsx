@@ -54,11 +54,29 @@ const Create = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (brings.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Skills required",
+        description: "Add at least one skill you bring to the table.",
+      });
+      return;
+    }
+
+    if (needs.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Needs required",
+        description: "Add at least one thing you're looking for.",
+      });
+      return;
+    }
+
     if (!formData.proofLink.trim()) {
       toast({
         variant: "destructive",
         title: "Proof link required",
-        description: "You must link a real project to join.",
+        description: "Link your live project (GitHub, Lovable app, Figma, etc.). Dreamers not allowed.",
       });
       return;
     }
@@ -127,7 +145,9 @@ const Create = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="brings">I bring</Label>
+            <Label htmlFor="brings" className="flex items-center gap-1">
+              I bring <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="brings"
               placeholder="Add your skills (e.g., React, Growth, UX)"
@@ -140,7 +160,7 @@ const Create = () => {
                 }
               }}
             />
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
               {brings.map((skill) => (
                 <Badge key={skill} variant="secondary" className="gap-1">
                   {skill}
@@ -151,10 +171,13 @@ const Create = () => {
                 </Badge>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="needs">I need</Label>
+            <Label htmlFor="needs" className="flex items-center gap-1">
+              I need <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="needs"
               placeholder="What's missing? (e.g., Backend, Co-foundr)"
@@ -167,7 +190,7 @@ const Create = () => {
                 }
               }}
             />
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
               {needs.map((need) => (
                 <Badge key={need} variant="outline" className="gap-1">
                   {need}
@@ -178,6 +201,7 @@ const Create = () => {
                 </Badge>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
           </div>
 
           <div className="space-y-2">
