@@ -19,13 +19,19 @@ const Landing = () => {
           Link your live project. Find your co-foundr.
         </p>
 
-        <Button
-          onClick={() => navigate("/create")}
-          size="lg"
-          className="w-full max-w-xs mx-auto text-base font-medium"
-        >
-          Create Your Foundr Card
-        </Button>
+        <div className="space-y-3 w-full max-w-xs mx-auto">
+          <Button
+            onClick={() => navigate("/auth")}
+            size="lg"
+            className="w-full text-base font-medium"
+          >
+            Get Started
+          </Button>
+          
+          <p className="text-xs text-center text-muted-foreground">
+            Sign up to create your Foundr card
+          </p>
+        </div>
 
         <p className="text-xs text-muted-foreground/60 mt-12">
           Proof required. Dreamers denied.
