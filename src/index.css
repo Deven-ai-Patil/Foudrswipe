@@ -51,4 +51,12 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105 active:scale-95;
+  }
+
+  input:focus, textarea:focus, button:focus {
+    @apply transition-all duration-200;
+  }
 }

@@ -99,10 +99,10 @@ const Create = () => {
 
   return (
     <main className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto animate-fade-in">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">Create Your Foundr Card</h1>
-          <p className="text-sm text-muted-foreground">Serious builders only. All fields required.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1 animate-slide-in-right">Create Your Foundr Card</h1>
+          <p className="text-sm text-muted-foreground animate-fade-in">Serious builders only. All fields required.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -148,24 +148,33 @@ const Create = () => {
             <Label htmlFor="brings" className="flex items-center gap-1">
               I bring <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="brings"
-              placeholder="Add your skills (e.g., React, Growth, UX)"
-              value={bringsInput}
-              onChange={(e) => setBringsInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addTag('brings', bringsInput);
-                }
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="brings"
+                placeholder="Add your skills (e.g., React, Growth, UX)"
+                value={bringsInput}
+                onChange={(e) => setBringsInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag('brings', bringsInput);
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                onClick={() => addTag('brings', bringsInput)}
+                className="shrink-0"
+              >
+                Add
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
               {brings.map((skill) => (
-                <Badge key={skill} variant="secondary" className="gap-1">
+                <Badge key={skill} variant="secondary" className="gap-1 animate-scale-in">
                   {skill}
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
                     onClick={() => removeTag('brings', skill)}
                   />
                 </Badge>
@@ -178,24 +187,33 @@ const Create = () => {
             <Label htmlFor="needs" className="flex items-center gap-1">
               I need <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="needs"
-              placeholder="What's missing? (e.g., Backend, Co-foundr)"
-              value={needsInput}
-              onChange={(e) => setNeedsInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addTag('needs', needsInput);
-                }
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="needs"
+                placeholder="What's missing? (e.g., Backend, Co-foundr)"
+                value={needsInput}
+                onChange={(e) => setNeedsInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag('needs', needsInput);
+                  }
+                }}
+              />
+              <Button 
+                type="button" 
+                onClick={() => addTag('needs', needsInput)}
+                className="shrink-0"
+              >
+                Add
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
               {needs.map((need) => (
-                <Badge key={need} variant="outline" className="gap-1">
+                <Badge key={need} variant="outline" className="gap-1 animate-scale-in">
                   {need}
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
                     onClick={() => removeTag('needs', need)}
                   />
                 </Badge>
@@ -249,7 +267,7 @@ const Create = () => {
             </div>
           </div>
 
-          <Button type="submit" size="lg" className="w-full">
+          <Button type="submit" size="lg" className="w-full hover-scale">
             Save & Start Swiping
           </Button>
         </form>
