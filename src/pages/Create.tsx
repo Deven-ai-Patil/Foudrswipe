@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { X, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Create = () => {
@@ -21,6 +22,8 @@ const Create = () => {
     time: "",
     proofLink: "",
   });
+  
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   const [brings, setBrings] = useState<string[]>([]);
   const [needs, setNeeds] = useState<string[]>([]);
@@ -86,7 +89,7 @@ const Create = () => {
       ...formData,
       brings,
       needs,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
+      avatar: photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
     }));
 
     toast({
@@ -95,6 +98,17 @@ const Create = () => {
     });
 
     navigate("/swipe");
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -106,6 +120,31 @@ const Create = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="photo">Profile Photo (Optional)</Label>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20 border-2 border-border animate-scale-in">
+                <AvatarImage src={photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || 'default'}`} />
+                <AvatarFallback>{formData.name?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <Label htmlFor="photo-upload" className="cursor-pointer">
+                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-md hover:border-primary transition-colors hover-scale">
+                    <Upload className="h-4 w-4" />
+                    <span className="text-sm">Upload Photo</span>
+                  </div>
+                  <Input
+                    id="photo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">Or we'll use a default avatar</p>
+              </div>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input
