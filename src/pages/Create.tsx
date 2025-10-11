@@ -201,16 +201,18 @@ const Create = () => {
                     addTag('brings', bringsInput);
                   }
                 }}
+                className="flex-1"
               />
               <Button 
                 type="button" 
                 onClick={() => addTag('brings', bringsInput)}
-                className="shrink-0"
+                className="shrink-0 w-[70px]"
               >
                 Add
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
+            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
+            <div className="flex flex-wrap gap-2 min-h-[32px]">
               {brings.map((skill) => (
                 <Badge key={skill} variant="secondary" className="gap-1 animate-scale-in">
                   {skill}
@@ -221,7 +223,6 @@ const Create = () => {
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
           </div>
 
           <div className="space-y-2">
@@ -240,16 +241,18 @@ const Create = () => {
                     addTag('needs', needsInput);
                   }
                 }}
+                className="flex-1"
               />
               <Button 
                 type="button" 
                 onClick={() => addTag('needs', needsInput)}
-                className="shrink-0"
+                className="shrink-0 w-[70px]"
               >
                 Add
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2 min-h-[32px]">
+            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
+            <div className="flex flex-wrap gap-2 min-h-[32px]">
               {needs.map((need) => (
                 <Badge key={need} variant="outline" className="gap-1 animate-scale-in">
                   {need}
@@ -260,7 +263,6 @@ const Create = () => {
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
           </div>
 
           <div className="space-y-2">
