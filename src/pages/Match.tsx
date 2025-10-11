@@ -75,6 +75,20 @@ const Match = () => {
           <p className="text-sm text-muted-foreground">
             Their email: <span className="text-foreground font-medium">{founder.email || "email@example.com"}</span>
           </p>
+          
+          {founder.calendlyLink && (
+            <a 
+              href={founder.calendlyLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full"
+            >
+              <Button className="w-full" variant="default">
+                📅 Schedule a Call
+              </Button>
+            </a>
+          )}
+          
           <div className="bg-muted/50 p-4 rounded-md text-left">
             <p className="text-sm text-muted-foreground mb-2">👉 Send a quick intro:</p>
             <p className="text-sm italic text-foreground">

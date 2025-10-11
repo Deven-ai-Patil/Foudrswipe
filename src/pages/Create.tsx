@@ -21,6 +21,7 @@ const Create = () => {
     timezone: "",
     time: "",
     proofLink: "",
+    calendlyLink: "",
   });
   
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -90,6 +91,7 @@ const Create = () => {
       brings,
       needs,
       avatar: photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
+      calendlyLink: formData.calendlyLink,
     }));
 
     toast({
@@ -304,6 +306,18 @@ const Create = () => {
               <p className="text-muted-foreground">✅ Good: yourapp.lovable.app, github.com/you/project, figma.com/proto/...</p>
               <p className="text-muted-foreground">❌ Not enough: "I have an idea", "Coming soon"</p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="calendly">📅 Calendly / Meeting Link (Optional)</Label>
+            <Input
+              id="calendly"
+              type="url"
+              placeholder="https://calendly.com/your-link or cal.com/yourname"
+              value={formData.calendlyLink}
+              onChange={(e) => setFormData({...formData, calendlyLink: e.target.value})}
+            />
+            <p className="text-xs text-muted-foreground">Makes it easy for matches to book time with you</p>
           </div>
 
           <Button type="submit" size="lg" className="w-full hover-scale">
