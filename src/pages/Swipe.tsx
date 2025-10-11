@@ -2,7 +2,49 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Check } from "lucide-react";
+import { X, Check, Award } from "lucide-react";
+
+// Calculate builder score
+const calculateBuilderScore = (founder: any) => {
+  let score = 0;
+  
+  // Has proof link? (+30)
+  if (founder.proof && founder.proof.trim()) {
+    score += 30;
+  }
+  
+  // Proof is live (valid URL format)? (+40)
+  if (founder.proof) {
+    try {
+      new URL(founder.proof);
+      score += 40;
+    } catch {
+      // Invalid URL
+    }
+  }
+  
+  // Added Calendly? (+20)
+  if (founder.calendlyLink && founder.calendlyLink.trim()) {
+    score += 20;
+  }
+  
+  // Completed all fields? (+10)
+  const requiredFields = [
+    founder.name,
+    founder.email,
+    founder.building,
+    founder.timezone,
+    founder.time,
+    founder.brings && founder.brings.length > 0,
+    founder.needs && founder.needs.length > 0
+  ];
+  
+  if (requiredFields.every(field => field)) {
+    score += 10;
+  }
+  
+  return score;
+};
 
 // Mock data for demo
 const mockFounders = [
@@ -16,6 +58,7 @@ const mockFounders = [
     time: "10–20 hrs/week",
     timezone: "PST",
     proof: "https://github.com/sarachen/analytics",
+    calendlyLink: "https://calendly.com/sarah-chen",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
   },
   {
@@ -108,7 +151,7 @@ const Swipe = () => {
           } ${direction === 'right' ? 'translate-x-full opacity-0' : ''}`}
         >
           <div className="p-6">
-            <div className="flex items-start gap-4 mb-6">
+            <div className="flex items-start gap-4 mb-4">
               <img
                 src={currentFounder.avatar}
                 alt={currentFounder.name}
@@ -118,9 +161,16 @@ const Swipe = () => {
                 <h2 className="text-2xl font-bold text-foreground mb-1">
                   {currentFounder.name}
                 </h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
                   🕗 {currentFounder.timezone} • {currentFounder.time}
                 </p>
+                <Badge 
+                  variant="outline" 
+                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold"
+                >
+                  <Award className="w-3 h-3 mr-1" />
+                  Builder Score: {calculateBuilderScore(currentFounder)}/100
+                </Badge>
               </div>
             </div>
 
