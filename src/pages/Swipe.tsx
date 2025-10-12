@@ -138,17 +138,19 @@ const Swipe = () => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discover Builders</h1>
+        <div className="text-center mb-6 animate-fade-in">
+          <h1 className="text-3xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+            Discover Builders
+          </h1>
           <p className="text-sm text-muted-foreground">Serious builders only.</p>
         </div>
 
         <div
-          className={`bg-card rounded-2xl shadow-lg overflow-hidden border border-border transition-all duration-300 ${
-            direction === 'left' ? '-translate-x-full opacity-0' : ''
-          } ${direction === 'right' ? 'translate-x-full opacity-0' : ''}`}
+          className={`bg-card rounded-2xl shadow-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-3xl hover:-translate-y-1 ${
+            direction === 'left' ? '-translate-x-full opacity-0 rotate-[-10deg]' : ''
+          } ${direction === 'right' ? 'translate-x-full opacity-0 rotate-[10deg]' : 'animate-fade-in'}`}
         >
           <div className="p-6">
             <div className="flex items-start gap-4 mb-4">
@@ -158,15 +160,16 @@ const Swipe = () => {
                 className="w-16 h-16 rounded-full border-2 border-primary flex-shrink-0"
               />
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-foreground mb-1">
+                <h2 className="text-2xl font-bold text-foreground mb-1 animate-fade-in">
                   {currentFounder.name}
                 </h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                   🕗 {currentFounder.timezone} • {currentFounder.time}
                 </p>
                 <Badge 
                   variant="outline" 
-                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold"
+                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold hover-scale animate-fade-in shadow-md hover:shadow-lg transition-all duration-300"
+                  style={{ animationDelay: "0.2s" }}
                 >
                   <Award className="w-3 h-3 mr-1" />
                   Builder Score: {calculateBuilderScore(currentFounder)}/100
@@ -217,12 +220,12 @@ const Swipe = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6">
+        <div className="flex gap-4 mt-6 animate-fade-in" style={{ animationDelay: "0.3s" }}>
           <Button
             onClick={() => handleSwipe(false)}
             variant="outline"
             size="lg"
-            className="flex-1 h-14 text-base"
+            className="flex-1 h-14 text-base hover-scale shadow-lg hover:shadow-xl transition-all duration-300 hover:border-destructive hover:text-destructive"
           >
             <X className="mr-2 h-5 w-5" />
             Pass
@@ -230,7 +233,7 @@ const Swipe = () => {
           <Button
             onClick={() => handleSwipe(true)}
             size="lg"
-            className="flex-1 h-14 text-base"
+            className="flex-1 h-14 text-base hover-scale shadow-xl hover:shadow-2xl transition-all duration-300"
           >
             <Check className="mr-2 h-5 w-5" />
             Connect

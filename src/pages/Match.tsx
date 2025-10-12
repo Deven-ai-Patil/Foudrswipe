@@ -1,24 +1,70 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Copy, Check, MessageCircle, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
 const Match = () => {
+  const { state } = useLocation();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const [showConfetti, setShowConfetti] = useState(true);
   const [copied, setCopied] = useState(false);
-  
-  const founder = location.state?.founder || {
-    name: "Alex",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-    building: "an amazing startup",
-  };
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const currentUser = JSON.parse(localStorage.getItem('foundrProfile') || '{"name":"You","building":"something cool"}');
+  const founder = state?.founder;
 
-  const introMessage = `Hey ${founder.name.split(' ')[0]}! Loved your project "${founder.building}". I'm building "${currentUser.building}" — open to a quick call?`;
+  useEffect(() => {
+    const setupMatch = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !founder) return;
+
+      setCurrentUserId(user.id);
+
+      // Create match in database
+      const { data: existingMatch } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`and(founder1_id.eq.${user.id},founder2_id.eq.${founder.id}),and(founder1_id.eq.${founder.id},founder2_id.eq.${user.id})`)
+        .single();
+
+      if (existingMatch) {
+        setMatchId(existingMatch.id);
+      } else {
+        const { data: newMatch, error } = await supabase
+          .from("matches")
+          .insert({
+            founder1_id: user.id,
+            founder2_id: founder.id,
+          })
+          .select()
+          .single();
+
+        if (!error && newMatch) {
+          setMatchId(newMatch.id);
+          // Store founder info in localStorage for demo
+          localStorage.setItem(`founder_${founder.id}`, JSON.stringify(founder));
+        }
+      }
+    };
+
+    setupMatch();
+  }, [founder]);
+
+  if (!founder) {
+    navigate("/");
+    return null;
+  }
+
+  const currentUser = JSON.parse(
+    localStorage.getItem("foundrProfile") || '{"name":"You","building":"something cool"}'
+  );
+
+  const introMessage = `Hey ${founder.name.split(" ")[0]}! Loved your project "${
+    founder.building
+  }". I'm building "${currentUser.building}" — open to a quick call?`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(introMessage);
@@ -30,119 +76,119 @@ const Match = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  useEffect(() => {
-    setTimeout(() => setShowConfetti(false), 3000);
-  }, []);
+  const goToMessages = () => {
+    if (matchId) {
+      navigate(`/messages?matchId=${matchId}`);
+    }
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
-      {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-ping"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${1 + Math.random() * 2}s`,
-              }}
-            >
-              <div className="w-2 h-2 bg-success rounded-full" />
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4 py-8">
+      <div className="w-full max-w-md animate-scale-in">
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4 hover-scale shadow-lg">
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-primary font-bold">It's a Match!</span>
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+          </div>
+          <p className="text-muted-foreground">You both want to connect</p>
+        </div>
+
+        <div className="bg-card rounded-2xl shadow-xl overflow-hidden border border-border mb-6 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-fade-in">
+          <div className="p-6">
+            <div className="flex items-start gap-4 mb-4">
+              <img
+                src={founder.avatar}
+                alt={founder.name}
+                className="w-16 h-16 rounded-full border-2 border-primary flex-shrink-0 hover-scale shadow-lg"
+              />
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-foreground mb-1">{founder.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  🕗 {founder.timezone} • {founder.time}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      <div className="text-center max-w-md mx-auto space-y-6 relative z-10">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          It's a match! 🎉
-        </h1>
-        
-        <p className="text-xl text-muted-foreground mb-8">
-          You both want to build together
-        </p>
+            <div className="space-y-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="space-y-1">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Building
+                </h3>
+                <p className="text-base text-foreground">{founder.building}</p>
+              </div>
 
-        <div className="flex justify-center items-center gap-8 mb-8">
-          <div className="text-center">
-            <div className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-2">
-              <span className="text-2xl">👤</span>
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Brings
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {founder.brings?.map((skill: string) => (
+                    <Badge
+                      key={skill}
+                      className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover-scale"
+                    >
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Needs
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {founder.needs?.map((need: string) => (
+                    <Badge
+                      key={need}
+                      variant="outline"
+                      className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover-scale"
+                    >
+                      {need}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="text-sm font-medium">You</p>
-          </div>
-          
-          <div className="text-4xl animate-pulse">
-            ❤️
-          </div>
-          
-          <div className="text-center">
-            <img 
-              src={founder.avatar}
-              alt={founder.name}
-              className="w-24 h-24 rounded-full border-2 border-primary mb-2"
-            />
-            <p className="text-sm font-medium">{founder.name}</p>
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-lg border border-border space-y-4">
-          <p className="text-lg font-semibold text-foreground">
-            You matched with {founder.name}!
+        <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border p-4 mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <h3 className="text-sm font-semibold text-foreground mb-2">
+            📋 Copy This Intro Message
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+            {introMessage}
           </p>
-          <p className="text-sm text-muted-foreground">
-            Their email: <span className="text-foreground font-medium">{founder.email || "email@example.com"}</span>
-          </p>
-          
-          {founder.calendlyLink && (
-            <a 
-              href={founder.calendlyLink} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block w-full"
-            >
-              <Button className="w-full" variant="default">
-                📅 Schedule a Call
-              </Button>
-            </a>
-          )}
-          
-          <div className="bg-muted/50 p-4 rounded-md text-left space-y-3">
-            <p className="text-sm font-medium text-foreground">💬 Copy this intro message:</p>
-            <p className="text-sm text-foreground bg-background p-3 rounded border border-border">
-              {introMessage}
-            </p>
-            <Button 
-              onClick={copyToClipboard}
-              variant="outline"
-              className="w-full gap-2"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4" />
-                  Copy Intro Message
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={copyToClipboard}
+            variant="outline"
+            className="w-full hover-scale transition-all duration-300"
+          >
+            {copied ? (
+              <>
+                <Check className="mr-2 h-4 w-4 animate-scale-in" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Intro Message
+              </>
+            )}
+          </Button>
         </div>
 
-        <Button 
-          onClick={() => navigate("/swipe")}
-          size="lg"
-          className="w-full"
-        >
-          Keep Swiping
-        </Button>
-
-        <footer className="pt-8 text-xs text-muted-foreground/60">
-          Built with FoundrSwipe — Serious builders only.
-        </footer>
+        <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+          <Button variant="outline" className="flex-1 hover-scale" onClick={() => navigate("/")}>
+            Keep Swiping
+          </Button>
+          <Button className="flex-1 hover-scale shadow-lg hover:shadow-xl" onClick={goToMessages}>
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Start Chat
+          </Button>
+        </div>
       </div>
     </main>
   );
