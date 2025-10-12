@@ -1,57 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Check, MessageCircle, Sparkles } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Copy, Check, Calendar, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Match = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [matchId, setMatchId] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const founder = state?.founder;
-
-  useEffect(() => {
-    const setupMatch = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !founder) return;
-
-      setCurrentUserId(user.id);
-
-      // Create match in database
-      const { data: existingMatch } = await supabase
-        .from("matches")
-        .select("id")
-        .or(`and(founder1_id.eq.${user.id},founder2_id.eq.${founder.id}),and(founder1_id.eq.${founder.id},founder2_id.eq.${user.id})`)
-        .single();
-
-      if (existingMatch) {
-        setMatchId(existingMatch.id);
-      } else {
-        const { data: newMatch, error } = await supabase
-          .from("matches")
-          .insert({
-            founder1_id: user.id,
-            founder2_id: founder.id,
-          })
-          .select()
-          .single();
-
-        if (!error && newMatch) {
-          setMatchId(newMatch.id);
-          // Store founder info in localStorage for demo
-          localStorage.setItem(`founder_${founder.id}`, JSON.stringify(founder));
-        }
-      }
-    };
-
-    setupMatch();
-  }, [founder]);
 
   if (!founder) {
     navigate("/");
@@ -74,12 +34,6 @@ const Match = () => {
       description: "Intro message copied to clipboard",
     });
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const goToMessages = () => {
-    if (matchId) {
-      navigate(`/messages?matchId=${matchId}`);
-    }
   };
 
   return (
@@ -181,12 +135,12 @@ const Match = () => {
         </div>
 
         <div className="flex gap-3 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-          <Button variant="outline" className="flex-1 hover-scale" onClick={() => navigate("/")}>
+          <Button variant="outline" className="flex-1 hover-scale" onClick={() => navigate("/swipe")}>
             Keep Swiping
           </Button>
-          <Button className="flex-1 hover-scale shadow-lg hover:shadow-xl" onClick={goToMessages}>
-            <MessageCircle className="mr-2 h-4 w-4" />
-            Start Chat
+          <Button className="flex-1 hover-scale shadow-lg hover:shadow-xl">
+            <Calendar className="mr-2 h-4 w-4" />
+            Schedule Call
           </Button>
         </div>
       </div>
