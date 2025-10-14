@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Check, Award } from "lucide-react";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 
 // Calculate builder score
 const calculateBuilderScore = (founder: any) => {
@@ -90,17 +91,53 @@ const mockFounders = [
 const Swipe = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState<'left' | 'right' | null>(null);
+  const [exitX, setExitX] = useState(0);
 
   const currentFounder = mockFounders[currentIndex];
 
+  // Motion values for drag
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-25, 25]);
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+
+  const handleDragEnd = (_e: any, info: PanInfo) => {
+    const threshold = 100;
+    
+    if (Math.abs(info.offset.x) > threshold) {
+      // Swiped
+      const liked = info.offset.x > 0;
+      setExitX(liked ? 300 : -300);
+      
+      setTimeout(() => {
+        if (currentIndex < mockFounders.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+          setExitX(0);
+          x.set(0);
+          
+          // Simulate match on second swipe right
+          if (liked && currentIndex === 1) {
+            setTimeout(() => {
+              navigate("/match", { state: { founder: currentFounder } });
+            }, 300);
+          }
+        } else {
+          setCurrentIndex(mockFounders.length);
+        }
+      }, 200);
+    } else {
+      // Snap back
+      x.set(0);
+    }
+  };
+
   const handleSwipe = (liked: boolean) => {
-    setDirection(liked ? 'right' : 'left');
+    setExitX(liked ? 300 : -300);
     
     setTimeout(() => {
       if (currentIndex < mockFounders.length - 1) {
         setCurrentIndex(currentIndex + 1);
-        setDirection(null);
+        setExitX(0);
+        x.set(0);
         
         // Simulate match on second swipe right
         if (liked && currentIndex === 1) {
@@ -111,7 +148,7 @@ const Swipe = () => {
       } else {
         setCurrentIndex(mockFounders.length);
       }
-    }, 300);
+    }, 200);
   };
 
   if (!currentFounder) {
@@ -147,11 +184,32 @@ const Swipe = () => {
           <p className="text-sm text-muted-foreground">Serious builders only.</p>
         </div>
 
-        <div
-          className={`bg-card rounded-2xl shadow-2xl overflow-hidden border border-border transition-all duration-300 hover:shadow-3xl hover:-translate-y-1 ${
-            direction === 'left' ? '-translate-x-full opacity-0 rotate-[-10deg]' : ''
-          } ${direction === 'right' ? 'translate-x-full opacity-0 rotate-[10deg]' : 'animate-fade-in'}`}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          style={{ x, rotate, opacity }}
+          animate={{ x: exitX }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border relative cursor-grab active:cursor-grabbing select-none touch-none"
         >
+          {/* Swipe Overlays */}
+          <motion.div
+            style={{ opacity: useTransform(x, [0, 100], [0, 1]) }}
+            className="absolute inset-0 bg-success/20 z-10 flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-success text-6xl font-bold transform rotate-[-15deg] border-4 border-success px-8 py-4 rounded-lg">
+              LIKE
+            </div>
+          </motion.div>
+          <motion.div
+            style={{ opacity: useTransform(x, [-100, 0], [1, 0]) }}
+            className="absolute inset-0 bg-destructive/20 z-10 flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-destructive text-6xl font-bold transform rotate-[15deg] border-4 border-destructive px-8 py-4 rounded-lg">
+              NOPE
+            </div>
+          </motion.div>
           <div className="p-6">
             <div className="flex items-start gap-4 mb-4">
               <img
@@ -218,7 +276,7 @@ const Swipe = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="flex gap-4 mt-6 animate-fade-in" style={{ animationDelay: "0.3s" }}>
           <Button
