@@ -2,16 +2,24 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Check, Calendar, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const Match = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { showMatchNotification } = useNotifications();
   const [copied, setCopied] = useState(false);
 
   const founder = state?.founder;
+
+  useEffect(() => {
+    if (founder) {
+      showMatchNotification(founder.name);
+    }
+  }, [founder, showMatchNotification]);
 
   if (!founder) {
     navigate("/");

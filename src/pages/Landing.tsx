@@ -1,8 +1,27 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { requestPermission, permission } = useNotifications();
+
+  useEffect(() => {
+    // Request notification permission on first visit
+    const hasRequestedPermission = localStorage.getItem("notificationPermissionRequested");
+    
+    if (!hasRequestedPermission && permission === "default") {
+      // Wait a bit before asking to avoid being too aggressive
+      const timer = setTimeout(() => {
+        requestPermission().then(() => {
+          localStorage.setItem("notificationPermissionRequested", "true");
+        });
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [permission, requestPermission]);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
