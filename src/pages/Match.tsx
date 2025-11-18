@@ -148,9 +148,9 @@ const Match = () => {
           <Button variant="outline" className="flex-1 hover-scale" onClick={() => navigate("/swipe")}>
             Keep Swiping
           </Button>
-          <Button className="flex-1 hover-scale shadow-lg hover:shadow-xl">
+          <Button className="flex-1 hover-scale shadow-lg hover:shadow-xl" onClick={() => navigate("/messages")}>
             <Calendar className="mr-2 h-4 w-4" />
-            Schedule Call
+            Start Messaging
           </Button>
         </div>
       </div>

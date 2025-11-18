@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Create from "./pages/Create";
 import Swipe from "./pages/Swipe";
 import Match from "./pages/Match";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/create" element={<Create />} />
           <Route path="/swipe" element={<Swipe />} />
           <Route path="/match" element={<Match />} />
+          <Route path="/messages" element={<Messages />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
