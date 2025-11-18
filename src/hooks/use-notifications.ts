@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export const useNotifications = () => {
   const [permission, setPermission] = useState<NotificationPermission>("default");
@@ -9,7 +9,7 @@ export const useNotifications = () => {
     }
   }, []);
 
-  const requestPermission = async () => {
+  const requestPermission = useCallback(async () => {
     if (!("Notification" in window)) {
       console.log("This browser does not support notifications");
       return false;
@@ -18,9 +18,9 @@ export const useNotifications = () => {
     const result = await Notification.requestPermission();
     setPermission(result);
     return result === "granted";
-  };
+  }, []);
 
-  const showNotification = (title: string, options?: NotificationOptions) => {
+  const showNotification = useCallback((title: string, options?: NotificationOptions) => {
     if (!("Notification" in window)) {
       console.log("This browser does not support notifications");
       return;
@@ -43,15 +43,15 @@ export const useNotifications = () => {
         }
       });
     }
-  };
+  }, [requestPermission]);
 
-  const showMatchNotification = (matchedUserName: string) => {
+  const showMatchNotification = useCallback((matchedUserName: string) => {
     showNotification("🎉 New Match!", {
       body: `You matched with ${matchedUserName}!`,
       tag: "match",
       requireInteraction: true,
     });
-  };
+  }, [showNotification]);
 
   return {
     permission,

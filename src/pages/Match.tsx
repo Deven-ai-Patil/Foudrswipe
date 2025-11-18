@@ -19,7 +19,9 @@ const Match = () => {
     if (founder) {
       showMatchNotification(founder.name);
     }
-  }, [founder, showMatchNotification]);
+    // Only show notification once when component mounts with founder
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!founder) {
     navigate("/");
