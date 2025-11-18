@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Check, CheckCheck } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { useNotifications } from "@/hooks/use-notifications";
 
 type Match = Tables<"matches">;
 type Message = Tables<"messages">;
@@ -24,6 +25,7 @@ const Messages = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { showMessageNotification } = useNotifications();
   const [matches, setMatches] = useState<MatchWithDetails[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(
     searchParams.get("matchId")
@@ -33,10 +35,22 @@ const Messages = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const isAppVisible = useRef(true);
 
   useEffect(() => {
     checkAuth();
     fetchMatches();
+
+    // Track app visibility for notifications
+    const handleVisibilityChange = () => {
+      isAppVisible.current = !document.hidden;
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -133,8 +147,20 @@ const Messages = () => {
           filter: `match_id=eq.${matchId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-          if (payload.new.sender_id !== currentUserId) {
+          const newMsg = payload.new as Message;
+          setMessages((prev) => [...prev, newMsg]);
+          
+          // Show notification if message is from other user and app is not visible
+          if (newMsg.sender_id !== currentUserId && !isAppVisible.current) {
+            const match = matches.find(m => m.id === matchId);
+            showMessageNotification(
+              match?.otherFounderName || "Someone",
+              newMsg.content,
+              matchId
+            );
+          }
+          
+          if (newMsg.sender_id !== currentUserId) {
             markMessagesAsRead(matchId);
           }
         }
