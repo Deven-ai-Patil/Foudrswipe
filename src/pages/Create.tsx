@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 const Create = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -23,6 +26,49 @@ const Create = () => {
     proofLink: "",
     calendlyLink: "",
   });
+
+  // Check auth and load profile
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setUserId(session.user.id);
+
+      // Load existing profile data
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile) {
+        setFormData({
+          name: profile.name || "",
+          email: profile.email || "",
+          building: profile.building || "",
+          timezone: profile.timezone || "",
+          time: profile.availability || "",
+          proofLink: profile.proof_of_work || "",
+          calendlyLink: profile.calendly_link || "",
+        });
+        setBrings(profile.brings || []);
+        setNeeds(profile.needs || []);
+        if (profile.photo_url) {
+          setPhotoPreview(profile.photo_url);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [navigate]);
+
   
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
@@ -55,7 +101,7 @@ const Create = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (brings.length === 0) {
@@ -85,14 +131,41 @@ const Create = () => {
       return;
     }
 
-    // Store form data in localStorage for demo
-    localStorage.setItem('foundrProfile', JSON.stringify({
-      ...formData,
-      brings,
-      needs,
-      avatar: photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
-      calendlyLink: formData.calendlyLink,
-    }));
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a profile.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    // Save to database
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        name: formData.name,
+        email: formData.email,
+        building: formData.building,
+        brings: brings,
+        needs: needs,
+        availability: formData.time,
+        timezone: formData.timezone,
+        photo_url: photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
+        proof_of_work: formData.proofLink,
+        calendly_link: formData.calendlyLink,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     toast({
       title: "Profile created!",
@@ -101,6 +174,7 @@ const Create = () => {
 
     navigate("/swipe");
   };
+
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,6 +186,14 @@ const Create = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background py-8 px-4">

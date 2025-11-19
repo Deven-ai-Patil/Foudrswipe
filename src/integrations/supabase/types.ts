@@ -73,6 +73,54 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          availability: string | null
+          brings: string[] | null
+          building: string | null
+          calendly_link: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          needs: string[] | null
+          photo_url: string | null
+          proof_of_work: string | null
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          availability?: string | null
+          brings?: string[] | null
+          building?: string | null
+          calendly_link?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          needs?: string[] | null
+          photo_url?: string | null
+          proof_of_work?: string | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          availability?: string | null
+          brings?: string[] | null
+          building?: string | null
+          calendly_link?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          needs?: string[] | null
+          photo_url?: string | null
+          proof_of_work?: string | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
