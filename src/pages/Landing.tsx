@@ -40,7 +40,7 @@ const Landing = () => {
 
         <div className="space-y-4 w-full max-w-sm mx-auto">
           <Button
-            onClick={() => navigate("/create")}
+            onClick={() => navigate("/auth")}
             size="lg"
             className="w-full text-lg font-bold rounded-2xl h-14 shadow-lg hover:scale-105 transition-transform"
           >
