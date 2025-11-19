@@ -1,131 +1,194 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Check, Award } from "lucide-react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 // Calculate builder score
 const calculateBuilderScore = (founder: any) => {
   let score = 0;
   
-  // Has proof link? (+30)
-  if (founder.proof && founder.proof.trim()) {
-    score += 30;
-  }
+  if (founder.proof_of_work?.trim()) score += 30;
   
-  // Proof is live (valid URL format)? (+40)
-  if (founder.proof) {
+  if (founder.proof_of_work) {
     try {
-      new URL(founder.proof);
+      new URL(founder.proof_of_work);
       score += 40;
-    } catch {
-      // Invalid URL
-    }
+    } catch {}
   }
   
-  // Added Calendly? (+20)
-  if (founder.calendlyLink && founder.calendlyLink.trim()) {
-    score += 20;
-  }
+  if (founder.calendly_link?.trim()) score += 20;
   
-  // Completed all fields? (+10)
   const requiredFields = [
     founder.name,
     founder.email,
     founder.building,
     founder.timezone,
-    founder.time,
-    founder.brings && founder.brings.length > 0,
-    founder.needs && founder.needs.length > 0
+    founder.availability,
+    founder.brings?.length > 0,
+    founder.needs?.length > 0
   ];
   
-  if (requiredFields.every(field => field)) {
-    score += 10;
-  }
+  if (requiredFields.every(field => field)) score += 10;
   
   return score;
 };
 
-// Mock data for demo
-const mockFounders = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    email: "sarah@builderswipe.com",
-    building: "SaaS analytics dashboard for small businesses",
-    brings: ["React", "Product Design", "Growth"],
-    needs: ["Backend", "DevOps"],
-    time: "10–20 hrs/week",
-    timezone: "PST",
-    proof: "https://github.com/sarachen/analytics",
-    calendlyLink: "https://calendly.com/sarah-chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-  },
-  {
-    id: 2,
-    name: "Marcus Thompson",
-    email: "marcus@fitremote.app",
-    building: "Fitness app for remote workers",
-    brings: ["iOS", "Backend", "ML"],
-    needs: ["Marketing", "UX Design"],
-    time: "Full-time",
-    timezone: "EST",
-    proof: "https://fitremote.app",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
-  },
-  {
-    id: 3,
-    name: "Priya Sharma",
-    email: "priya@devtools.io",
-    building: "Open-source dev tools for API testing",
-    brings: ["Node.js", "Documentation", "Community"],
-    needs: ["Frontend", "Co-founder"],
-    time: "5 hrs/week",
-    timezone: "IST",
-    proof: "https://github.com/priya/apitest",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
-  },
-];
-
 const Swipe = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitX, setExitX] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const currentFounder = mockFounders[currentIndex];
+  const currentFounder = profiles[currentIndex];
 
-  // Motion values for drag
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  const loadProfiles = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      setCurrentUserId(session.user.id);
+
+      // Get profiles user has already swiped on
+      const { data: swipedProfiles } = await supabase
+        .from("swipes")
+        .select("swiped_id")
+        .eq("swiper_id", session.user.id);
+
+      const swipedIds = swipedProfiles?.map(s => s.swiped_id) || [];
+
+      // Get profiles excluding current user and already swiped profiles
+      const { data: allProfiles, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .neq("id", session.user.id)
+        .not("id", "in", `(${swipedIds.length > 0 ? swipedIds.join(',') : 'null'})`);
+
+      if (error) throw error;
+
+      setProfiles(allProfiles || []);
+    } catch (error) {
+      console.error("Error loading profiles:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profiles. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkForMatch = async (swipedUserId: string) => {
+    if (!currentUserId) return false;
+
+    // Check if the swiped user has also swiped right on current user
+    const { data: mutualSwipe } = await supabase
+      .from("swipes")
+      .select("*")
+      .eq("swiper_id", swipedUserId)
+      .eq("swiped_id", currentUserId)
+      .maybeSingle();
+
+    if (mutualSwipe) {
+      // It's a match! Create match record
+      const { error } = await supabase
+        .from("matches")
+        .insert({
+          founder1_id: currentUserId,
+          founder2_id: swipedUserId,
+        });
+
+      if (!error) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const handleSwipeRight = async () => {
+    if (!currentUserId || !currentFounder) return;
+
+    try {
+      // Save the swipe
+      const { error: swipeError } = await supabase
+        .from("swipes")
+        .insert({
+          swiper_id: currentUserId,
+          swiped_id: currentFounder.id,
+        });
+
+      if (swipeError) throw swipeError;
+
+      // Check for match
+      const isMatch = await checkForMatch(currentFounder.id);
+
+      if (isMatch) {
+        // Navigate to match page
+        setTimeout(() => {
+          navigate("/match", { state: { founder: currentFounder } });
+        }, 300);
+      } else {
+        moveToNextProfile();
+      }
+    } catch (error) {
+      console.error("Error handling swipe:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save swipe. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSwipeLeft = () => {
+    moveToNextProfile();
+  };
+
+  const moveToNextProfile = () => {
+    setTimeout(() => {
+      if (currentIndex < profiles.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setExitX(0);
+        x.set(0);
+      } else {
+        setCurrentIndex(profiles.length);
+      }
+    }, 200);
+  };
 
   const handleDragEnd = (_e: any, info: PanInfo) => {
     const threshold = 100;
     
     if (Math.abs(info.offset.x) > threshold) {
-      // Swiped
       const liked = info.offset.x > 0;
       setExitX(liked ? 300 : -300);
       
-      setTimeout(() => {
-        if (currentIndex < mockFounders.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-          setExitX(0);
-          x.set(0);
-          
-          // Simulate match on second swipe right
-          if (liked && currentIndex === 1) {
-            setTimeout(() => {
-              navigate("/match", { state: { founder: currentFounder } });
-            }, 300);
-          }
-        } else {
-          setCurrentIndex(mockFounders.length);
-        }
-      }, 200);
+      if (liked) {
+        handleSwipeRight();
+      } else {
+        handleSwipeLeft();
+      }
     } else {
-      // Snap back
       x.set(0);
     }
   };
@@ -133,173 +196,180 @@ const Swipe = () => {
   const handleSwipe = (liked: boolean) => {
     setExitX(liked ? 300 : -300);
     
-    setTimeout(() => {
-      if (currentIndex < mockFounders.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setExitX(0);
-        x.set(0);
-        
-        // Simulate match on second swipe right
-        if (liked && currentIndex === 1) {
-          setTimeout(() => {
-            navigate("/match", { state: { founder: currentFounder } });
-          }, 300);
-        }
-      } else {
-        setCurrentIndex(mockFounders.length);
-      }
-    }, 200);
-  };
-
-  if (!currentFounder) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-bold text-foreground mb-3">
-            No more serious builders today
-          </h2>
-          <p className="text-muted-foreground mb-6">Come back tomorrow!</p>
-          <Button onClick={() => navigate("/")}>Back to Home</Button>
-        </div>
-      </main>
-    );
-  }
-
-  const shortenUrl = (url: string) => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname + (urlObj.pathname !== '/' ? '/...' : '');
-    } catch {
-      return url.substring(0, 30) + '...';
+    if (liked) {
+      handleSwipeRight();
+    } else {
+      handleSwipeLeft();
     }
   };
 
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-6 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground mb-2 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            Discover Builders
-          </h1>
-          <p className="text-sm text-muted-foreground">Serious builders only.</p>
-        </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-lg">Loading profiles...</p>
+      </div>
+    );
+  }
 
-        <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          onDragEnd={handleDragEnd}
-          style={{ x, rotate, opacity }}
-          animate={{ x: exitX }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border relative cursor-grab active:cursor-grabbing select-none touch-none"
-        >
-          {/* Swipe Overlays */}
-          <motion.div
-            style={{ opacity: useTransform(x, [0, 100], [0, 1]) }}
-            className="absolute inset-0 bg-success/20 z-10 flex items-center justify-center pointer-events-none"
-          >
-            <div className="text-success text-6xl font-bold transform rotate-[-15deg] border-4 border-success px-8 py-4 rounded-lg">
-              LIKE
-            </div>
-          </motion.div>
-          <motion.div
-            style={{ opacity: useTransform(x, [-100, 0], [1, 0]) }}
-            className="absolute inset-0 bg-destructive/20 z-10 flex items-center justify-center pointer-events-none"
-          >
-            <div className="text-destructive text-6xl font-bold transform rotate-[15deg] border-4 border-destructive px-8 py-4 rounded-lg">
-              NOPE
-            </div>
-          </motion.div>
-          <div className="p-6">
-            <div className="flex items-start gap-4 mb-4">
-              <img
-                src={currentFounder.avatar}
-                alt={currentFounder.name}
-                className="w-16 h-16 rounded-full border-2 border-primary flex-shrink-0"
-              />
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-foreground mb-1 animate-fade-in">
-                  {currentFounder.name}
-                </h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                  🕗 {currentFounder.timezone} • {currentFounder.time}
-                </p>
-                <Badge 
-                  variant="outline" 
-                  className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold hover-scale animate-fade-in shadow-md hover:shadow-lg transition-all duration-300"
-                  style={{ animationDelay: "0.2s" }}
-                >
-                  <Award className="w-3 h-3 mr-1" />
-                  Builder Score: {calculateBuilderScore(currentFounder)}/100
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Building</h3>
-                <p className="text-base text-foreground">{currentFounder.building}</p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">I Bring</h3>
-                <div className="flex flex-wrap gap-2">
-                  {currentFounder.brings.map((skill) => (
-                    <Badge key={skill} className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">I Need</h3>
-                <div className="flex flex-wrap gap-2">
-                  {currentFounder.needs.map((need) => (
-                    <Badge key={need} variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
-                      {need}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1 pt-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Proof</h3>
-                <a
-                  href={currentFounder.proof}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline break-all inline-block"
-                >
-                  {shortenUrl(currentFounder.proof)}
-                </a>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="flex gap-4 mt-6 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-          <Button
-            onClick={() => handleSwipe(false)}
-            variant="outline"
-            size="lg"
-            className="flex-1 h-14 text-base hover-scale shadow-lg hover:shadow-xl transition-all duration-300 hover:border-destructive hover:text-destructive"
-          >
-            <X className="mr-2 h-5 w-5" />
-            Pass
-          </Button>
-          <Button
-            onClick={() => handleSwipe(true)}
-            size="lg"
-            className="flex-1 h-14 text-base hover-scale shadow-xl hover:shadow-2xl transition-all duration-300"
-          >
-            <Check className="mr-2 h-5 w-5" />
-            Connect
+  if (!currentFounder) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <h2 className="text-3xl font-bold mb-4">No More Profiles</h2>
+          <p className="text-muted-foreground mb-6">
+            You've reviewed all available founders. Check back later for new profiles!
+          </p>
+          <Button onClick={() => navigate("/messages")}>
+            View Messages
           </Button>
         </div>
       </div>
-    </main>
+    );
+  }
+
+  const builderScore = calculateBuilderScore(currentFounder);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="p-4 border-b border-border">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <h1 className="text-2xl font-bold">FoundrSwipe</h1>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate("/messages")}
+          >
+            Messages
+          </Button>
+        </div>
+      </header>
+
+      {/* Swipe Area */}
+      <div className="flex-1 flex items-center justify-center p-4 pb-24">
+        <div className="relative w-full max-w-md aspect-[3/4]">
+          <motion.div
+            className="absolute inset-0 bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={handleDragEnd}
+            style={{ x, rotate, opacity }}
+            animate={exitX !== 0 ? { x: exitX } : {}}
+          >
+            {/* Card Content */}
+            <div className="h-full flex flex-col">
+              {/* Avatar Section */}
+              <div className="relative h-1/2 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <img 
+                  src={currentFounder.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentFounder.name}`}
+                  alt={currentFounder.name}
+                  className="w-32 h-32 rounded-full border-4 border-background shadow-lg object-cover"
+                />
+                
+                {/* Builder Score Badge */}
+                <div className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border-2 border-primary flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-primary" />
+                  <span className="font-bold text-primary">{builderScore}</span>
+                </div>
+              </div>
+
+              {/* Info Section */}
+              <div className="flex-1 p-6 overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-1">{currentFounder.name}</h2>
+                <p className="text-sm text-muted-foreground mb-4">{currentFounder.email}</p>
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-sm mb-2">Building</h3>
+                    <p className="text-sm">{currentFounder.building}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-sm mb-2">Brings</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {currentFounder.brings?.map((skill: string, i: number) => (
+                        <Badge key={i} variant="secondary">{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-sm mb-2">Needs</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {currentFounder.needs?.map((need: string, i: number) => (
+                        <Badge key={i} variant="outline">{need}</Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Availability:</span>
+                      <p className="font-medium">{currentFounder.availability || "Not specified"}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Timezone:</span>
+                      <p className="font-medium">{currentFounder.timezone || "Not specified"}</p>
+                    </div>
+                  </div>
+
+                  {currentFounder.proof_of_work && (
+                    <div>
+                      <h3 className="font-semibold text-sm mb-1">Proof of Work</h3>
+                      <a 
+                        href={currentFounder.proof_of_work}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {currentFounder.proof_of_work}
+                      </a>
+                    </div>
+                  )}
+
+                  {currentFounder.calendly_link && (
+                    <div>
+                      <h3 className="font-semibold text-sm mb-1">Calendly</h3>
+                      <a 
+                        href={currentFounder.calendly_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {currentFounder.calendly_link}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-sm border-t border-border">
+        <div className="max-w-md mx-auto flex items-center justify-center gap-6">
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-16 h-16 rounded-full border-2"
+            onClick={() => handleSwipe(false)}
+          >
+            <X className="w-8 h-8" />
+          </Button>
+          <Button
+            size="lg"
+            className="w-16 h-16 rounded-full"
+            onClick={() => handleSwipe(true)}
+          >
+            <Check className="w-8 h-8" />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default Swipe;
+
