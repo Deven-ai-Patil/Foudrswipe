@@ -205,25 +205,74 @@ const Swipe = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-lg">Loading profiles...</p>
-      </div>
+      <motion.div
+        className="min-h-screen bg-background flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          animate={{
+            scale: [1, 1.1, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <Award className="w-12 h-12 text-primary" />
+          <motion.p
+            className="text-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Loading profiles...
+          </motion.p>
+        </motion.div>
+      </motion.div>
     );
   }
 
   if (!currentFounder) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <motion.div
+        className="min-h-screen bg-background flex flex-col items-center justify-center p-4"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 100 }}
+      >
         <div className="text-center max-w-md">
-          <h2 className="text-3xl font-bold mb-4">No More Profiles</h2>
-          <p className="text-muted-foreground mb-6">
+          <motion.h2
+            className="text-3xl font-bold mb-4"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            No More Profiles
+          </motion.h2>
+          <motion.p
+            className="text-muted-foreground mb-6"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             You've reviewed all available founders. Check back later for new profiles!
-          </p>
-          <Button onClick={() => navigate("/messages")}>
-            View Messages
-          </Button>
+          </motion.p>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button onClick={() => navigate("/messages")}>
+              View Messages
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -232,18 +281,30 @@ const Swipe = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="p-4 border-b border-border">
+      <motion.header
+        className="p-4 border-b border-border"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold">FoundrSwipe</h1>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate("/messages")}
+          <motion.h1
+            className="text-2xl font-bold"
+            whileHover={{ scale: 1.05 }}
           >
-            Messages
-          </Button>
+            FoundrSwipe
+          </motion.h1>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate("/messages")}
+            >
+              Messages
+            </Button>
+          </motion.div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Swipe Area */}
       <div className="flex-1 flex items-center justify-center p-4 pb-24">
@@ -255,54 +316,114 @@ const Swipe = () => {
             onDragEnd={handleDragEnd}
             style={{ x, rotate, opacity }}
             animate={exitX !== 0 ? { x: exitX } : {}}
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
           >
             {/* Card Content */}
             <div className="h-full flex flex-col">
               {/* Avatar Section */}
-              <div className="relative h-1/2 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <img 
+              <motion.div
+                className="relative h-1/2 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+                whileHover={{ scale: 1.02 }}
+              >
+                <motion.img 
                   src={currentFounder.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentFounder.name}`}
                   alt={currentFounder.name}
                   className="w-32 h-32 rounded-full border-4 border-background shadow-lg object-cover"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
                 />
                 
                 {/* Builder Score Badge */}
-                <div className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border-2 border-primary flex items-center gap-1.5">
+                <motion.div
+                  className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-full border-2 border-primary flex items-center gap-1.5"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  whileHover={{ scale: 1.1 }}
+                >
                   <Award className="w-4 h-4 text-primary" />
-                  <span className="font-bold text-primary">{builderScore}</span>
-                </div>
-              </div>
+                  <motion.span
+                    className="font-bold text-primary"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    {builderScore}
+                  </motion.span>
+                </motion.div>
+              </motion.div>
 
               {/* Info Section */}
-              <div className="flex-1 p-6 overflow-y-auto">
+              <motion.div
+                className="flex-1 p-6 overflow-y-auto"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
                 <h2 className="text-2xl font-bold mb-1">{currentFounder.name}</h2>
                 <p className="text-sm text-muted-foreground mb-4">{currentFounder.email}</p>
 
                 <div className="space-y-4">
-                  <div>
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
                     <h3 className="font-semibold text-sm mb-2">Building</h3>
                     <p className="text-sm">{currentFounder.building}</p>
-                  </div>
+                  </motion.div>
 
-                  <div>
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
                     <h3 className="font-semibold text-sm mb-2">Brings</h3>
                     <div className="flex flex-wrap gap-2">
                       {currentFounder.brings?.map((skill: string, i: number) => (
-                        <Badge key={i} variant="secondary">{skill}</Badge>
+                        <motion.div
+                          key={i}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.7 + i * 0.05 }}
+                          whileHover={{ scale: 1.1 }}
+                        >
+                          <Badge variant="secondary">{skill}</Badge>
+                        </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div>
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                  >
                     <h3 className="font-semibold text-sm mb-2">Needs</h3>
                     <div className="flex flex-wrap gap-2">
                       {currentFounder.needs?.map((need: string, i: number) => (
-                        <Badge key={i} variant="outline">{need}</Badge>
+                        <motion.div
+                          key={i}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.9 + i * 0.05 }}
+                          whileHover={{ scale: 1.1 }}
+                        >
+                          <Badge variant="outline">{need}</Badge>
+                        </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <motion.div
+                    className="grid grid-cols-2 gap-4 text-sm"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 1 }}
+                  >
                     <div>
                       <span className="text-muted-foreground">Availability:</span>
                       <p className="font-medium">{currentFounder.availability || "Not specified"}</p>
@@ -311,10 +432,14 @@ const Swipe = () => {
                       <span className="text-muted-foreground">Timezone:</span>
                       <p className="font-medium">{currentFounder.timezone || "Not specified"}</p>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {currentFounder.proof_of_work && (
-                    <div>
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 1.1 }}
+                    >
                       <h3 className="font-semibold text-sm mb-1">Proof of Work</h3>
                       <a 
                         href={currentFounder.proof_of_work}
@@ -324,11 +449,15 @@ const Swipe = () => {
                       >
                         {currentFounder.proof_of_work}
                       </a>
-                    </div>
+                    </motion.div>
                   )}
 
                   {currentFounder.calendly_link && (
-                    <div>
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 1.2 }}
+                    >
                       <h3 className="font-semibold text-sm mb-1">Calendly</h3>
                       <a 
                         href={currentFounder.calendly_link}
@@ -338,35 +467,50 @@ const Swipe = () => {
                       >
                         {currentFounder.calendly_link}
                       </a>
-                    </div>
+                    </motion.div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-sm border-t border-border">
+      <motion.div
+        className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-sm border-t border-border"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring" }}
+      >
         <div className="max-w-md mx-auto flex items-center justify-center gap-6">
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-16 h-16 rounded-full border-2"
-            onClick={() => handleSwipe(false)}
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: -5 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <X className="w-8 h-8" />
-          </Button>
-          <Button
-            size="lg"
-            className="w-16 h-16 rounded-full"
-            onClick={() => handleSwipe(true)}
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-16 h-16 rounded-full border-2"
+              onClick={() => handleSwipe(false)}
+            >
+              <X className="w-8 h-8" />
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <Check className="w-8 h-8" />
-          </Button>
+            <Button
+              size="lg"
+              className="w-16 h-16 rounded-full"
+              onClick={() => handleSwipe(true)}
+            >
+              <Check className="w-8 h-8" />
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

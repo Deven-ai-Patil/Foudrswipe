@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 const Create = () => {
   const navigate = useNavigate();
@@ -189,34 +190,72 @@ const Create = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-lg">Loading...</p>
-      </div>
+      <motion.div
+        className="min-h-screen bg-background flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="w-12 h-12 text-primary" />
+          <motion.p
+            className="text-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Loading...
+          </motion.p>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
     <main className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-md mx-auto animate-fade-in">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1 animate-slide-in-right">Create Your Foundr Card</h1>
-          <p className="text-sm text-muted-foreground animate-fade-in">Serious builders only. All fields required.</p>
-        </div>
+      <motion.div
+        className="max-w-md mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div
+          className="mb-6"
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h1 className="text-2xl font-bold text-foreground mb-1">Create Your Foundr Card</h1>
+          <p className="text-sm text-muted-foreground">Serious builders only. All fields required.</p>
+        </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <Label htmlFor="photo">Profile Photo (Optional)</Label>
             <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 border-2 border-border animate-scale-in">
-                <AvatarImage src={photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || 'default'}`} />
-                <AvatarFallback>{formData.name?.[0]?.toUpperCase() || '?'}</AvatarFallback>
-              </Avatar>
+              <motion.div whileHover={{ scale: 1.1, rotate: 5 }}>
+                <Avatar className="h-20 w-20 border-2 border-border">
+                  <AvatarImage src={photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || 'default'}`} />
+                  <AvatarFallback>{formData.name?.[0]?.toUpperCase() || '?'}</AvatarFallback>
+                </Avatar>
+              </motion.div>
               <div className="flex-1">
                 <Label htmlFor="photo-upload" className="cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-md hover:border-primary transition-colors hover-scale">
+                  <motion.div
+                    className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-md hover:border-primary transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
                     <Upload className="h-4 w-4" />
                     <span className="text-sm">Upload Photo</span>
-                  </div>
+                  </motion.div>
                   <Input
                     id="photo-upload"
                     type="file"
@@ -228,46 +267,58 @@ const Create = () => {
                 <p className="text-xs text-muted-foreground mt-1">Or we'll use a default avatar</p>
               </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              placeholder="Alex Rivera"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              required
-            />
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@startup.com"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              required
-            />
-            <p className="text-xs text-muted-foreground">Used for magic link login</p>
-          </div>
+          {/* Animate each form field */}
+          {[
+            { id: "name", label: "Full Name", placeholder: "Alex Rivera", type: "input" },
+            { id: "email", label: "Email", placeholder: "you@startup.com", type: "input" },
+            { id: "building", label: "What I'm building", placeholder: "AI tool for indie writers", type: "textarea" }
+          ].map((field, index) => (
+            <motion.div
+              key={field.id}
+              className="space-y-2"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 + index * 0.1 }}
+            >
+              <Label htmlFor={field.id}>{field.label}</Label>
+              {field.type === "textarea" ? (
+                <Textarea
+                  id={field.id}
+                  placeholder={field.placeholder}
+                  maxLength={100}
+                  value={formData[field.id as keyof typeof formData]}
+                  onChange={(e) => setFormData({...formData, [field.id]: e.target.value})}
+                  required
+                  className="resize-none h-20 transition-all duration-200 focus:scale-[1.01]"
+                />
+              ) : (
+                <Input
+                  id={field.id}
+                  type={field.id === "email" ? "email" : "text"}
+                  placeholder={field.placeholder}
+                  value={formData[field.id as keyof typeof formData]}
+                  onChange={(e) => setFormData({...formData, [field.id]: e.target.value})}
+                  required
+                  className="transition-all duration-200 focus:scale-[1.01]"
+                />
+              )}
+              {field.id === "email" && (
+                <p className="text-xs text-muted-foreground">Used for magic link login</p>
+              )}
+              {field.id === "building" && (
+                <p className="text-xs text-muted-foreground">One sentence. Be specific.</p>
+              )}
+            </motion.div>
+          ))}
 
-          <div className="space-y-2">
-            <Label htmlFor="building">What I'm building</Label>
-            <Textarea
-              id="building"
-              placeholder="AI tool for indie writers"
-              maxLength={100}
-              value={formData.building}
-              onChange={(e) => setFormData({...formData, building: e.target.value})}
-              required
-              className="resize-none h-20"
-            />
-            <p className="text-xs text-muted-foreground">One sentence. Be specific.</p>
-          </div>
-
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
             <Label htmlFor="brings" className="flex items-center gap-1">
               I bring <span className="text-destructive">*</span>
             </Label>
@@ -285,29 +336,45 @@ const Create = () => {
                 }}
                 className="flex-1"
               />
-              <Button 
-                type="button" 
-                onClick={() => addTag('brings', bringsInput)}
-                className="shrink-0 w-[70px]"
-              >
-                Add
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  type="button" 
+                  onClick={() => addTag('brings', bringsInput)}
+                  className="shrink-0 w-[70px]"
+                >
+                  Add
+                </Button>
+              </motion.div>
             </div>
             <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
-              {brings.map((skill) => (
-                <Badge key={skill} variant="secondary" className="gap-1 animate-scale-in">
-                  {skill}
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
-                    onClick={() => removeTag('brings', skill)}
-                  />
-                </Badge>
+              {brings.map((skill, i) => (
+                <motion.div
+                  key={skill}
+                  initial={{ scale: 0, rotate: -10 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: 10 }}
+                  transition={{ type: "spring", stiffness: 200, delay: i * 0.05 }}
+                  whileHover={{ scale: 1.1, rotate: 2 }}
+                >
+                  <Badge variant="secondary" className="gap-1">
+                    {skill}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
+                      onClick={() => removeTag('brings', skill)}
+                    />
+                  </Badge>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+          >
             <Label htmlFor="needs" className="flex items-center gap-1">
               I need <span className="text-destructive">*</span>
             </Label>
@@ -325,29 +392,45 @@ const Create = () => {
                 }}
                 className="flex-1"
               />
-              <Button 
-                type="button" 
-                onClick={() => addTag('needs', needsInput)}
-                className="shrink-0 w-[70px]"
-              >
-                Add
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  type="button" 
+                  onClick={() => addTag('needs', needsInput)}
+                  className="shrink-0 w-[70px]"
+                >
+                  Add
+                </Button>
+              </motion.div>
             </div>
             <p className="text-xs text-muted-foreground">Press Enter to add. At least one required.</p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
-              {needs.map((need) => (
-                <Badge key={need} variant="outline" className="gap-1 animate-scale-in">
-                  {need}
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
-                    onClick={() => removeTag('needs', need)}
-                  />
-                </Badge>
+              {needs.map((need, i) => (
+                <motion.div
+                  key={need}
+                  initial={{ scale: 0, rotate: 10 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: -10 }}
+                  transition={{ type: "spring", stiffness: 200, delay: i * 0.05 }}
+                  whileHover={{ scale: 1.1, rotate: -2 }}
+                >
+                  <Badge variant="outline" className="gap-1">
+                    {need}
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
+                      onClick={() => removeTag('needs', need)}
+                    />
+                  </Badge>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
             <Label htmlFor="time">Time available</Label>
             <Select value={formData.time} onValueChange={(value) => setFormData({...formData, time: value})} required>
               <SelectTrigger id="time" className="bg-card">
@@ -359,9 +442,14 @@ const Create = () => {
                 <SelectItem value="Full-time">Full-time</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
             <Label htmlFor="timezone">Timezone</Label>
             <Input
               id="timezone"
@@ -369,10 +457,16 @@ const Create = () => {
               value={formData.timezone}
               onChange={(e) => setFormData({...formData, timezone: e.target.value})}
               required
+              className="transition-all duration-200 focus:scale-[1.01]"
             />
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.1 }}
+          >
             <Label htmlFor="proof" className="text-base font-semibold">
               ✅ Proof Link (REQUIRED)
             </Label>
@@ -383,16 +477,21 @@ const Create = () => {
               value={formData.proofLink}
               onChange={(e) => setFormData({...formData, proofLink: e.target.value})}
               required
-              className="border-2"
+              className="border-2 transition-all duration-200 focus:scale-[1.01]"
             />
             <div className="text-xs space-y-1">
               <p className="text-muted-foreground font-medium">You must link a real project to join.</p>
               <p className="text-muted-foreground">✅ Good: yourapp.lovable.app, github.com/you/project, figma.com/proto/...</p>
               <p className="text-muted-foreground">❌ Not enough: "I have an idea", "Coming soon"</p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
             <Label htmlFor="calendly">📅 Calendly / Meeting Link (Optional)</Label>
             <Input
               id="calendly"
@@ -400,15 +499,24 @@ const Create = () => {
               placeholder="https://calendly.com/your-link or cal.com/yourname"
               value={formData.calendlyLink}
               onChange={(e) => setFormData({...formData, calendlyLink: e.target.value})}
+              className="transition-all duration-200 focus:scale-[1.01]"
             />
             <p className="text-xs text-muted-foreground">Makes it easy for matches to book time with you</p>
-          </div>
+          </motion.div>
 
-          <Button type="submit" size="lg" className="w-full hover-scale">
-            Save & Start Swiping
-          </Button>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.3 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button type="submit" size="lg" className="w-full">
+              Save & Start Swiping
+            </Button>
+          </motion.div>
         </form>
-      </div>
+      </motion.div>
     </main>
   );
 };
