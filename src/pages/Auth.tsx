@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { motion } from "framer-motion";
+import { Lock, Mail, Sparkles } from "lucide-react";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -123,21 +125,74 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            FoundrSwipe
-          </h1>
-          <p className="text-muted-foreground">
-            {isLogin ? "Welcome back!" : "Find your perfect co-founder"}
-          </p>
-        </div>
+    <div className="relative min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 overflow-hidden">
+      {/* Animated background orbs */}
+      <motion.div
+        className="absolute top-20 left-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{ duration: 8, repeat: Infinity }}
+      />
+      <motion.div
+        className="absolute bottom-20 right-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1.2, 1, 1.2],
+          opacity: [0.5, 0.3, 0.5],
+        }}
+        transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+      />
 
-        <div className="bg-card border border-border rounded-lg p-8 shadow-lg">
+      <motion.div
+        className="w-full max-w-md relative z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div
+          className="text-center mb-8"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+        >
+          <motion.div
+            className="inline-flex items-center gap-2 mb-4"
+            whileHover={{ scale: 1.05 }}
+          >
+            <Sparkles className="w-6 h-6 text-primary" />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              FoundrSwipe
+            </h1>
+            <Sparkles className="w-6 h-6 text-primary" />
+          </motion.div>
+          <motion.p
+            className="text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            {isLogin ? "Welcome back!" : "Find your perfect co-founder"}
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-8 shadow-xl"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <motion.div
+              className="space-y-2"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -145,11 +200,20 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="transition-all duration-200 focus:scale-[1.02]"
               />
-            </div>
+            </motion.div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <motion.div
+              className="space-y-2"
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Label htmlFor="password" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -157,24 +221,49 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="transition-all duration-200 focus:scale-[1.02]"
               />
-            </div>
+            </motion.div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Login" : "Sign Up"}
-            </Button>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <motion.span
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    Loading...
+                  </motion.span>
+                ) : (
+                  isLogin ? "Login" : "Sign Up"
+                )}
+              </Button>
+            </motion.div>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
+          <motion.div
+            className="mt-6 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            <motion.button
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-            </button>
-          </div>
-        </div>
-      </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
