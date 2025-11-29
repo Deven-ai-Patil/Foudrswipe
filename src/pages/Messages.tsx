@@ -42,16 +42,17 @@ const Messages = () => {
   const messageInputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Use mock user ID from localStorage for now
-    const storedProfile = localStorage.getItem("foundrProfile");
-    if (storedProfile) {
-      const profile = JSON.parse(storedProfile);
-      setCurrentUserId(profile.id || "mock-user-id");
-    } else {
-      setCurrentUserId("mock-user-id");
-    }
+    const initializeUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setCurrentUserId(session.user.id);
+        fetchMatches(session.user.id);
+      } else {
+        navigate("/auth");
+      }
+    };
     
-    fetchMatches();
+    initializeUser();
 
     // Track app visibility for notifications
     const handleVisibilityChange = () => {
@@ -74,77 +75,120 @@ const Messages = () => {
     }
   }, [selectedMatch]);
 
-  const fetchMatches = async () => {
-    // Mock data for demonstration - replace with real data when auth is implemented
-    const mockMatches: MatchWithDetails[] = [
-      {
-        id: "match-1",
-        founder1_id: "mock-user-id",
-        founder2_id: "other-founder-1",
-        created_at: new Date().toISOString(),
-        matched_at: new Date().toISOString(),
-        otherFounderName: "Alex Chen",
-        otherFounderAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
-        lastMessage: "Hey! Love your project",
-        unreadCount: 2,
-      },
-      {
-        id: "match-2",
-        founder1_id: "mock-user-id",
-        founder2_id: "other-founder-2",
-        created_at: new Date().toISOString(),
-        matched_at: new Date().toISOString(),
-        otherFounderName: "Sarah Johnson",
-        otherFounderAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-        lastMessage: "When can we chat?",
-        unreadCount: 0,
-      },
-    ];
+  const fetchMatches = async (userId: string) => {
+    try {
+      const { data: matchesData, error } = await supabase
+        .from("matches")
+        .select("*")
+        .or(`founder1_id.eq.${userId},founder2_id.eq.${userId}`);
 
-    setMatches(mockMatches);
+      if (error) throw error;
+
+      if (!matchesData || matchesData.length === 0) {
+        setMatches([]);
+        return;
+      }
+
+      // Fetch profile details for each match
+      const matchesWithDetails = await Promise.all(
+        matchesData.map(async (match) => {
+          const otherFounderId =
+            match.founder1_id === userId ? match.founder2_id : match.founder1_id;
+
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name, photo_url")
+            .eq("id", otherFounderId)
+            .single();
+
+          // Get last message
+          const { data: lastMsg } = await supabase
+            .from("messages")
+            .select("content")
+            .eq("match_id", match.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          // Get unread count
+          const { count: unreadCount } = await supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .eq("match_id", match.id)
+            .eq("read", false)
+            .neq("sender_id", userId);
+
+          return {
+            ...match,
+            otherFounderName: profile?.name || "Unknown",
+            otherFounderAvatar:
+              profile?.photo_url ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherFounderId}`,
+            lastMessage: lastMsg?.content || "",
+            unreadCount: unreadCount || 0,
+          };
+        })
+      );
+
+      setMatches(matchesWithDetails);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load matches",
+        variant: "destructive",
+      });
+    }
   };
 
   const fetchMessages = async (matchId: string) => {
-    // Mock messages for demonstration
-    const mockMessages: Message[] = [
-      {
-        id: "msg-1",
-        match_id: matchId,
-        sender_id: "other-founder-1",
-        content: "Hey! I saw your project and I'm really impressed. Would love to collaborate!",
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        read: true,
-      },
-      {
-        id: "msg-2",
-        match_id: matchId,
-        sender_id: currentUserId || "mock-user-id",
-        content: "Thanks! I checked out your work too. Let's definitely connect!",
-        created_at: new Date(Date.now() - 1800000).toISOString(),
-        read: true,
-      },
-      {
-        id: "msg-3",
-        match_id: matchId,
-        sender_id: "other-founder-1",
-        content: "Great! Are you free for a call this week?",
-        created_at: new Date(Date.now() - 900000).toISOString(),
-        read: false,
-      },
-    ];
+    try {
+      const { data: messagesData, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: true });
 
-    setMessages(mockMessages);
+      if (error) throw error;
+
+      setMessages(messagesData || []);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load messages",
+        variant: "destructive",
+      });
+    }
   };
 
   const markMessagesAsRead = async (matchId: string) => {
-    // Mock implementation - messages are marked as read locally
-    setMessages(prev => 
-      prev.map(msg => 
-        msg.match_id === matchId && msg.sender_id !== currentUserId
-          ? { ...msg, read: true }
-          : msg
-      )
-    );
+    if (!currentUserId) return;
+
+    try {
+      await supabase
+        .from("messages")
+        .update({ read: true })
+        .eq("match_id", matchId)
+        .neq("sender_id", currentUserId)
+        .eq("read", false);
+
+      // Update local state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.match_id === matchId && msg.sender_id !== currentUserId
+            ? { ...msg, read: true }
+            : msg
+        )
+      );
+
+      // Refresh matches to update unread count
+      if (currentUserId) {
+        fetchMatches(currentUserId);
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
   };
 
   const setupRealtimeSubscription = (matchId: string) => {
@@ -237,25 +281,29 @@ const Messages = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedMatch || !currentUserId) return;
 
-    // Mock message sending - in production, use Supabase
-    const mockMessage: Message = {
-      id: `msg-${Date.now()}`,
-      match_id: selectedMatch,
-      sender_id: currentUserId,
-      content: newMessage.trim(),
-      created_at: new Date().toISOString(),
-      read: false,
-    };
+    try {
+      const { error } = await supabase.from("messages").insert({
+        match_id: selectedMatch,
+        sender_id: currentUserId,
+        content: newMessage.trim(),
+      });
 
-    setMessages(prev => [...prev, mockMessage]);
-    setNewMessage("");
-    setIsTyping(false);
-    handleTyping(false);
+      if (error) throw error;
 
-    toast({
-      title: "Message sent",
-      description: "Your message has been delivered",
-    });
+      setNewMessage("");
+      setIsTyping(false);
+      handleTyping(false);
+
+      // Refresh matches to update last message
+      fetchMatches(currentUserId);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (value: string) => {
