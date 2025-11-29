@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, Send, Check, CheckCheck } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useNotifications } from "@/hooks/use-notifications";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 type Match = Tables<"matches">;
 type Message = Tables<"messages">;
@@ -26,6 +28,7 @@ const Messages = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { showMessageNotification } = useNotifications();
+  const { currentStep, currentStepIndex, totalSteps, isOnboardingActive, nextStep, skipOnboarding } = useOnboarding();
   const [matches, setMatches] = useState<MatchWithDetails[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(
     searchParams.get("matchId")
@@ -36,6 +39,7 @@ const Messages = () => {
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const isAppVisible = useRef(true);
+  const messageInputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Use mock user ID from localStorage for now
@@ -399,12 +403,14 @@ const Messages = () => {
                 }}
                 className="flex gap-2"
               >
-                <Input
-                  value={newMessage}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                />
+                <div ref={messageInputRef} className="flex-1">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    placeholder="Type a message..."
+                    className="w-full"
+                  />
+                </div>
                 <Button type="submit" size="icon" disabled={!newMessage.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
@@ -417,6 +423,21 @@ const Messages = () => {
           </div>
         )}
       </div>
+
+      {/* Onboarding Tooltip */}
+      {isOnboardingActive && currentStep?.page === "/messages" && (
+        <OnboardingTooltip
+          isVisible={true}
+          title={currentStep.title}
+          description={currentStep.description}
+          position="top"
+          onNext={nextStep}
+          onSkip={skipOnboarding}
+          currentStep={currentStepIndex}
+          totalSteps={totalSteps}
+          targetRef={messageInputRef}
+        />
+      )}
     </div>
   );
 };

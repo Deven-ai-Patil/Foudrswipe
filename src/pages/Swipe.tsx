@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { X, Check, Award } from "lucide-react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 // Calculate builder score
 const calculateBuilderScore = (founder: any) => {
@@ -40,11 +42,13 @@ const calculateBuilderScore = (founder: any) => {
 const Swipe = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { currentStep, currentStepIndex, totalSteps, isOnboardingActive, nextStep, skipOnboarding } = useOnboarding();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitX, setExitX] = useState(0);
   const [loading, setLoading] = useState(true);
+  const swipeCardRef = useRef<HTMLDivElement>(null);
 
   const currentFounder = profiles[currentIndex];
 
@@ -308,7 +312,7 @@ const Swipe = () => {
 
       {/* Swipe Area */}
       <div className="flex-1 flex items-center justify-center p-4 pb-24">
-        <div className="relative w-full max-w-md aspect-[3/4]">
+        <div ref={swipeCardRef} className="relative w-full max-w-md aspect-[3/4]">
           <motion.div
             className="absolute inset-0 bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing"
             drag="x"
@@ -511,6 +515,21 @@ const Swipe = () => {
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Onboarding Tooltip */}
+      {isOnboardingActive && currentStep?.page === "/swipe" && (
+        <OnboardingTooltip
+          isVisible={true}
+          title={currentStep.title}
+          description={currentStep.description}
+          position="top"
+          onNext={nextStep}
+          onSkip={skipOnboarding}
+          currentStep={currentStepIndex}
+          totalSteps={totalSteps}
+          targetRef={swipeCardRef}
+        />
+      )}
     </div>
   );
 };

@@ -2,17 +2,21 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Check, Calendar, Sparkles, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/use-notifications";
 import { motion } from "framer-motion";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 const Match = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { showMatchNotification } = useNotifications();
+  const { currentStep, currentStepIndex, totalSteps, isOnboardingActive, nextStep, skipOnboarding } = useOnboarding();
   const [copied, setCopied] = useState(false);
+  const messageButtonRef = useRef<HTMLDivElement>(null);
 
   const founder = state?.founder;
 
@@ -286,7 +290,7 @@ const Match = () => {
               Keep Swiping
             </Button>
           </motion.div>
-          <motion.div className="flex-1" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div ref={messageButtonRef} className="flex-1" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button className="w-full shadow-lg" onClick={() => navigate("/messages")}>
               <Calendar className="mr-2 h-4 w-4" />
               Start Messaging
@@ -294,6 +298,21 @@ const Match = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Onboarding Tooltip */}
+      {isOnboardingActive && currentStep?.page === "/match" && (
+        <OnboardingTooltip
+          isVisible={true}
+          title={currentStep.title}
+          description={currentStep.description}
+          position="top"
+          onNext={nextStep}
+          onSkip={skipOnboarding}
+          currentStep={currentStepIndex}
+          totalSteps={totalSteps}
+          targetRef={messageButtonRef}
+        />
+      )}
     </main>
   );
 };

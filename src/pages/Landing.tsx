@@ -1,13 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/hooks/use-notifications";
 import { motion } from "framer-motion";
 import { Sparkles, Rocket, Zap } from "lucide-react";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 const Landing = () => {
   const navigate = useNavigate();
   const { requestPermission, permission } = useNotifications();
+  const { currentStep, currentStepIndex, totalSteps, isOnboardingActive, nextStep, skipOnboarding } = useOnboarding();
+  const getStartedButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Request notification permission on first visit
@@ -101,6 +105,7 @@ const Landing = () => {
           transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
         >
           <motion.div
+            ref={getStartedButtonRef}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -138,6 +143,37 @@ const Landing = () => {
           Proof required. Dreamers denied.
         </motion.p>
       </div>
+
+      {/* Onboarding Tooltips */}
+      {isOnboardingActive && currentStep?.page === "/" && (
+        <>
+          {currentStepIndex === 0 && (
+            <OnboardingTooltip
+              isVisible={true}
+              title={currentStep.title}
+              description={currentStep.description}
+              position="bottom"
+              onNext={nextStep}
+              onSkip={skipOnboarding}
+              currentStep={currentStepIndex}
+              totalSteps={totalSteps}
+            />
+          )}
+          {currentStepIndex === 1 && (
+            <OnboardingTooltip
+              isVisible={true}
+              title={currentStep.title}
+              description={currentStep.description}
+              position="bottom"
+              onNext={nextStep}
+              onSkip={skipOnboarding}
+              currentStep={currentStepIndex}
+              totalSteps={totalSteps}
+              targetRef={getStartedButtonRef}
+            />
+          )}
+        </>
+      )}
     </main>
   );
 };
