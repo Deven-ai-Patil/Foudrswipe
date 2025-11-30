@@ -22,18 +22,55 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const checkProfileCompletion = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("name, building, brings, needs, photo_url")
+        .eq("id", userId)
+        .single();
+
+      if (error || !profile) {
+        // Profile doesn't exist, go to create
+        navigate("/create");
+        return;
+      }
+
+      // Check if essential fields are completed
+      const isComplete = 
+        profile.name && 
+        profile.building && 
+        profile.brings && 
+        profile.brings.length > 0 && 
+        profile.needs && 
+        profile.needs.length > 0 &&
+        profile.photo_url;
+
+      if (isComplete) {
+        // Profile is complete, go to swipe
+        navigate("/swipe");
+      } else {
+        // Profile incomplete, go to create
+        navigate("/create");
+      }
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      navigate("/create");
+    }
+  };
+
   useEffect(() => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/create");
+        checkProfileCompletion(session.user.id);
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === "SIGNED_IN") {
-        navigate("/create");
+        checkProfileCompletion(session.user.id);
       }
     });
 
