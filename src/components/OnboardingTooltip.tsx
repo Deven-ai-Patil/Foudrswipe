@@ -64,7 +64,7 @@ export const OnboardingTooltip = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-background/80 z-[60]"
             onClick={onSkip}
           />
 
