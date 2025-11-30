@@ -64,7 +64,7 @@ export const OnboardingTooltip = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/80 z-[60]"
+            className="fixed inset-0 bg-background/10 z-[60]"
             onClick={onSkip}
           />
 
@@ -80,7 +80,7 @@ export const OnboardingTooltip = ({
                 left: targetRef.current.getBoundingClientRect().left - 8,
                 width: targetRef.current.getBoundingClientRect().width + 16,
                 height: targetRef.current.getBoundingClientRect().height + 16,
-                boxShadow: "0 0 0 4px hsl(var(--primary) / 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.5)",
+                boxShadow: "0 0 0 4px hsl(var(--primary) / 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.15)",
                 borderRadius: "12px",
               }}
             />
