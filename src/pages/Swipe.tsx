@@ -82,11 +82,17 @@ const Swipe = () => {
       const swipedIds = swipedProfiles?.map(s => s.swiped_id) || [];
 
       // Get profiles excluding current user and already swiped profiles
-      const { data: allProfiles, error } = await supabase
+      let query = supabase
         .from("profiles")
         .select("*")
-        .neq("id", session.user.id)
-        .not("id", "in", `(${swipedIds.length > 0 ? swipedIds.join(',') : 'null'})`);
+        .neq("id", session.user.id);
+      
+      // Only add the "not in" filter if there are swiped IDs
+      if (swipedIds.length > 0) {
+        query = query.not("id", "in", `(${swipedIds.join(',')})`);
+      }
+
+      const { data: allProfiles, error } = await query;
 
       if (error) throw error;
 
