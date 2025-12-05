@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Check, Award } from "lucide-react";
+import { X, Check, Award, Settings, RefreshCw } from "lucide-react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { OnboardingTooltip } from "@/components/OnboardingTooltip";
@@ -55,6 +55,8 @@ const Swipe = () => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   useEffect(() => {
     loadProfiles();
@@ -197,7 +199,7 @@ const Swipe = () => {
     }
   };
 
-  const handleSwipe = (liked: boolean) => {
+  const handleSwipe = useCallback((liked: boolean) => {
     setExitX(liked ? 300 : -300);
     
     if (liked) {
@@ -205,7 +207,22 @@ const Swipe = () => {
     } else {
       handleSwipeLeft();
     }
-  };
+  }, [currentFounder, currentUserId]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!currentFounder) return;
+      if (e.key === 'ArrowRight') {
+        handleSwipe(true);
+      } else if (e.key === 'ArrowLeft') {
+        handleSwipe(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentFounder, handleSwipe]);
 
   if (loading) {
     return (
@@ -248,32 +265,54 @@ const Swipe = () => {
         transition={{ type: "spring", stiffness: 100 }}
       >
         <div className="text-center max-w-md">
+          <motion.div
+            className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Award className="w-12 h-12 text-primary" />
+          </motion.div>
           <motion.h2
             className="text-3xl font-bold mb-4"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            No More Profiles
+            You're All Caught Up!
           </motion.h2>
           <motion.p
-            className="text-muted-foreground mb-6"
+            className="text-muted-foreground mb-8"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            You've reviewed all available founders. Check back later for new profiles!
+            You've reviewed all available founders. New founders join daily - check back soon!
           </motion.p>
           <motion.div
+            className="flex flex-col sm:flex-row gap-3 justify-center"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
-            <Button onClick={() => navigate("/messages")}>
-              View Messages
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setLoading(true);
+                  setCurrentIndex(0);
+                  loadProfiles();
+                }}
+                className="gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button onClick={() => navigate("/messages")}>
+                View Messages
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </motion.div>
@@ -298,7 +337,17 @@ const Swipe = () => {
           >
             FoundrSwipe
           </motion.h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate("/create")}
+                title="Edit Profile"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+            </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 variant="ghost" 
@@ -325,8 +374,38 @@ const Swipe = () => {
       </motion.header>
 
       {/* Swipe Area */}
-      <div className="flex-1 flex items-center justify-center p-4 pb-24">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 pb-24">
+        {/* Profile Counter */}
+        <motion.div 
+          className="mb-4 text-sm text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <span className="font-medium text-foreground">{currentIndex + 1}</span> of {profiles.length} profiles
+          <span className="ml-2 text-xs">(← → keys to swipe)</span>
+        </motion.div>
+
         <div ref={swipeCardRef} className="relative w-full max-w-md aspect-[3/4]">
+          {/* LIKE Overlay */}
+          <motion.div
+            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            style={{ opacity: likeOpacity }}
+          >
+            <div className="bg-green-500/90 text-white text-4xl font-bold px-8 py-4 rounded-lg rotate-[-20deg] border-4 border-white shadow-xl">
+              LIKE
+            </div>
+          </motion.div>
+          
+          {/* NOPE Overlay */}
+          <motion.div
+            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            style={{ opacity: nopeOpacity }}
+          >
+            <div className="bg-red-500/90 text-white text-4xl font-bold px-8 py-4 rounded-lg rotate-[20deg] border-4 border-white shadow-xl">
+              NOPE
+            </div>
+          </motion.div>
+
           <motion.div
             className="absolute inset-0 bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing"
             drag="x"
