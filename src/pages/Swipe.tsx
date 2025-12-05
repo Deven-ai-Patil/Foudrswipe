@@ -298,15 +298,29 @@ const Swipe = () => {
           >
             FoundrSwipe
           </motion.h1>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate("/messages")}
-            >
-              Messages
-            </Button>
-          </motion.div>
+          <div className="flex items-center gap-2">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate("/messages")}
+              >
+                Messages
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate("/auth");
+                }}
+              >
+                Logout
+              </Button>
+            </motion.div>
+          </div>
         </div>
       </motion.header>
 
@@ -368,7 +382,7 @@ const Swipe = () => {
                 transition={{ delay: 0.4 }}
               >
                 <h2 className="text-2xl font-bold mb-1">{currentFounder.name}</h2>
-                <p className="text-sm text-muted-foreground mb-4">{currentFounder.email}</p>
+                <p className="text-sm text-muted-foreground mb-4">{currentFounder.timezone || "Remote"}</p>
 
                 <div className="space-y-4">
                   <motion.div
