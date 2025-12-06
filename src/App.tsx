@@ -11,7 +11,7 @@ import Swipe from "./pages/Swipe";
 import Match from "./pages/Match";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
-
+import { RealtimeNotifications } from "./components/RealtimeNotifications";
 const queryClient = new QueryClient();
 
 const pageVariants = {
@@ -119,6 +119,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RealtimeNotifications />
         <AnimatedRoutes />
       </BrowserRouter>
     </TooltipProvider>
