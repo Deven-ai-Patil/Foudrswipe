@@ -8,6 +8,7 @@ import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { NotificationBell } from "@/components/NotificationBell";
 
 // Calculate builder score
 const calculateBuilderScore = (founder: any) => {
@@ -344,6 +345,9 @@ const Swipe = () => {
             FoundrSwipe
           </motion.h1>
           <div className="flex items-center gap-1">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <NotificationBell />
+            </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 variant="ghost" 
