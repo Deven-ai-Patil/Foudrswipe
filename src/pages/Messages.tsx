@@ -12,6 +12,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useNotifications } from "@/hooks/use-notifications";
 import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { NotificationBell } from "@/components/NotificationBell";
 
 type Match = Tables<"matches">;
 type Message = Tables<"messages">;
@@ -330,7 +331,8 @@ const Messages = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Messages</h1>
+            <h1 className="text-xl font-bold flex-1">Messages</h1>
+            <NotificationBell />
           </div>
         </div>
 
