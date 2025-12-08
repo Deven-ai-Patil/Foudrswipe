@@ -179,14 +179,19 @@ const Swipe = () => {
 
   const moveToNextProfile = () => {
     setTimeout(() => {
-      if (currentIndex < profiles.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setExitX(0);
-        x.set(0);
-      } else {
-        setCurrentIndex(profiles.length);
-      }
-    }, 200);
+      // Always reset animation state first
+      setExitX(0);
+      x.set(0);
+      
+      // Use functional update to avoid stale closure issues
+      setCurrentIndex(prev => {
+        if (prev < profiles.length - 1) {
+          return prev + 1;
+        } else {
+          return profiles.length;
+        }
+      });
+    }, 300);
   };
 
   const handleDragEnd = (_e: any, info: PanInfo) => {
@@ -202,6 +207,7 @@ const Swipe = () => {
         handleSwipeLeft();
       }
     } else {
+      // Animate back to center smoothly
       x.set(0);
     }
   };
