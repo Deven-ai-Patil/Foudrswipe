@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Check, Award, Settings, RefreshCw } from "lucide-react";
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { NotificationBell } from "@/components/NotificationBell";
-
+import { useSwipeFeedback } from "@/hooks/use-swipe-feedback";
 // Calculate builder score
 const calculateBuilderScore = (founder: any) => {
   let score = 0;
@@ -44,6 +44,7 @@ const Swipe = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentStep, currentStepIndex, totalSteps, isOnboardingActive, nextStep, skipOnboarding } = useOnboarding();
+  const { triggerRightSwipe, triggerLeftSwipe, triggerMatch, triggerDragStart } = useSwipeFeedback();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -52,12 +53,15 @@ const Swipe = () => {
   const swipeCardRef = useRef<HTMLDivElement>(null);
 
   const currentFounder = profiles[currentIndex];
+  const nextFounder = profiles[currentIndex + 1];
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
+  // Scale for the next card based on current drag
+  const nextCardScale = useTransform(x, [-200, 0, 200], [1, 0.92, 1]);
 
   useEffect(() => {
     loadProfiles();
@@ -141,6 +145,8 @@ const Swipe = () => {
   const handleSwipeRight = async () => {
     if (!currentUserId || !currentFounder) return;
 
+    triggerRightSwipe();
+
     try {
       // Save the swipe
       const { error: swipeError } = await supabase
@@ -156,6 +162,7 @@ const Swipe = () => {
       const isMatch = await checkForMatch(currentFounder.id);
 
       if (isMatch) {
+        triggerMatch();
         // Navigate to match page
         setTimeout(() => {
           navigate("/match", { state: { founder: currentFounder } });
@@ -174,6 +181,7 @@ const Swipe = () => {
   };
 
   const handleSwipeLeft = () => {
+    triggerLeftSwipe();
     moveToNextProfile();
   };
 
@@ -192,6 +200,10 @@ const Swipe = () => {
         }
       });
     }, 300);
+  };
+
+  const handleDragStart = () => {
+    triggerDragStart();
   };
 
   const handleDragEnd = (_e: any, info: PanInfo) => {
@@ -402,9 +414,33 @@ const Swipe = () => {
         </motion.div>
 
         <div ref={swipeCardRef} className="relative w-full max-w-md aspect-[3/4]">
+          {/* Next Card Preview (Stack Effect) */}
+          {nextFounder && (
+            <motion.div
+              className="absolute inset-0 bg-card border-2 border-border/50 rounded-2xl shadow-lg overflow-hidden"
+              style={{ scale: nextCardScale }}
+              initial={{ scale: 0.92, y: 8 }}
+              animate={{ scale: 0.92, y: 8 }}
+            >
+              <div className="h-full flex flex-col opacity-60">
+                <div className="relative h-1/2 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                  <img 
+                    src={nextFounder.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${nextFounder.name}`}
+                    alt="Next profile"
+                    className="w-28 h-28 rounded-full border-4 border-background shadow-lg object-cover"
+                  />
+                </div>
+                <div className="flex-1 p-6">
+                  <div className="h-6 w-32 bg-muted/50 rounded mb-2" />
+                  <div className="h-4 w-24 bg-muted/30 rounded" />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* LIKE Overlay */}
           <motion.div
-            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
             style={{ opacity: likeOpacity }}
           >
             <div className="bg-green-500/90 text-white text-4xl font-bold px-8 py-4 rounded-lg rotate-[-20deg] border-4 border-white shadow-xl">
@@ -414,7 +450,7 @@ const Swipe = () => {
           
           {/* NOPE Overlay */}
           <motion.div
-            className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+            className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
             style={{ opacity: nopeOpacity }}
           >
             <div className="bg-red-500/90 text-white text-4xl font-bold px-8 py-4 rounded-lg rotate-[20deg] border-4 border-white shadow-xl">
@@ -422,10 +458,12 @@ const Swipe = () => {
             </div>
           </motion.div>
 
+          {/* Current Card */}
           <motion.div
-            className="absolute inset-0 bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing"
+            className="absolute inset-0 bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing z-10"
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             style={{ x, rotate, opacity }}
             animate={exitX !== 0 ? { x: exitX } : {}}
